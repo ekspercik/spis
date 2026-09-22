@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Biblioteka do czytania LibreOffice (.ods) / Excel (.xlsx) -->
+    <!-- SheetJS (Odczyt LibreOffice / Excel) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
@@ -24,21 +24,10 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        /* Custom scrollbar dla tabeli */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0f172a;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #475569;
-        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between">
@@ -52,7 +41,7 @@
                 </div>
                 <div>
                     <h1 class="text-2xl font-bold tracking-tight">Baza Pojazdów</h1>
-                    <p class="text-xs text-slate-400">Przeglądarka spisów i arkuszy</p>
+                    <p class="text-xs text-slate-400">Przeglądarka spisów i ofert</p>
                 </div>
             </div>
         </div>
@@ -64,11 +53,10 @@
         <div id="listsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
     </main>
 
-    <!-- OKNO MODALNE (Interaktywna Tabela) -->
-    <div id="tableModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
+    <!-- OKNO MODALNE (Tabela aut) -->
+    <div id="tableModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 hidden flex items-center justify-center p-2 sm:p-4">
         <div class="bg-slate-900 border border-slate-700 w-full max-w-6xl h-[90vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden">
             
-            <!-- Nagłówek okna -->
             <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/50">
                 <div>
                     <h3 id="modalTitle" class="text-lg font-bold text-white">Ładowanie...</h3>
@@ -79,17 +67,14 @@
                 </button>
             </div>
 
-            <!-- Panel Filtrowania i Wyszukiwania -->
+            <!-- Panel Filtrowania -->
             <div class="p-4 bg-slate-900/90 border-b border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                
-                <!-- Wyszukiwarka (VIN / Nr Rej / Szukaj) -->
                 <div class="relative">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
                     <input type="text" id="tableSearch" oninput="applyFilters()" placeholder="Szukaj VIN, nr rej, model..." 
                         class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
                 </div>
 
-                <!-- Filtr po Marce -->
                 <div class="relative">
                     <select id="brandFilter" onchange="applyFilters()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 appearance-none cursor-pointer">
                         <option value="">Wszystkie marki</option>
@@ -97,7 +82,6 @@
                     <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                 </div>
 
-                <!-- Sortowanie Alfabetyczne -->
                 <div class="relative">
                     <select id="sortOrder" onchange="applyFilters()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 appearance-none cursor-pointer">
                         <option value="asc">Sortuj: A - Z (Alfabetycznie)</option>
@@ -105,18 +89,10 @@
                     </select>
                     <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                 </div>
-
             </div>
 
-            <!-- Kontener na Tabelę -->
-            <div class="flex-grow overflow-auto p-4" id="tableContainer">
-                <div class="text-center py-12 text-slate-400">
-                    <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 text-blue-500"></i>
-                    <p>Wczytywanie danych z arkusza...</p>
-                </div>
-            </div>
+            <div class="flex-grow overflow-auto p-4" id="tableContainer"></div>
 
-            <!-- Stopka okna z przyciskiem pobierania -->
             <div class="p-4 border-t border-slate-800 bg-slate-800/30 flex justify-end">
                 <a id="modalDownloadBtn" href="#" download class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 shadow-lg shadow-blue-600/20">
                     <i class="fa-solid fa-download"></i> Pobierz plik LibreOffice
@@ -125,19 +101,42 @@
         </div>
     </div>
 
+    <!-- OKNO MODALNE (PODGLĄD ZDJĘCIA) -->
+    <div id="imageModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex flex-col items-center justify-center p-4">
+        <button onclick="closeImageModal()" class="absolute top-5 right-5 text-white/70 hover:text-white text-3xl z-50 p-2">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        
+        <div class="relative max-w-5xl max-h-[80vh] flex items-center justify-center">
+            <img id="previewImage" src="" alt="Podgląd auta" class="max-w-full max-h-[80vh] rounded-xl object-contain shadow-2xl border border-slate-700">
+            
+            <!-- Przyciski Nawigacji (Jeśli jest więcej zdjęć) -->
+            <button id="prevImgBtn" onclick="changeImage(-1)" class="absolute left-2 bg-black/50 hover:bg-black/80 text-white p-3 rounded-full hidden">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button id="nextImgBtn" onclick="changeImage(1)" class="absolute right-2 bg-black/50 hover:bg-black/80 text-white p-3 rounded-full hidden">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <div id="imageCounter" class="mt-4 text-slate-400 text-sm font-medium"></div>
+    </div>
+
     <!-- Stopka -->
     <footer class="border-t border-slate-800 py-6 text-center text-slate-500 text-sm">
         <p>&copy; Baza Pojazdów</p>
     </footer>
 
-    <!-- Skrypt Logiki -->
     <script>
         let allLists = [];
-        let currentRawData = [];  // Surowe dane z otwartego arkusza
-        let headers = [];         // Nazwy kolumn
-        let brandColumnKey = '';  // Klucz kolumny zawierającej markę
+        let currentRawData = [];
+        let headers = [];
+        let brandColumnKey = '';
 
-        // Pobieranie listy spisów
+        // Zmienne do obsługi galerii zdjęć
+        let currentImageUrls = [];
+        let currentImageIndex = 0;
+
         async function loadData() {
             try {
                 const response = await fetch('data.json');
@@ -145,11 +144,9 @@
                 renderCards(allLists);
             } catch (error) {
                 console.error('Błąd:', error);
-                document.getElementById('listsContainer').innerHTML = `<p class="text-red-400">Nie udało się załadować spisu.</p>`;
             }
         }
 
-        // Renderowanie kart na stronie głównej
         function renderCards(data) {
             const container = document.getElementById('listsContainer');
             container.innerHTML = '';
@@ -161,7 +158,6 @@
                             <h3 class="text-xl font-bold mb-2 text-white">${item.title}</h3>
                             <p class="text-slate-400 text-sm mb-6">${item.description}</p>
                         </div>
-
                         <div class="flex gap-3 pt-4 border-t border-slate-800">
                             <button onclick="openSheet('${item.fileUrl}', '${item.title}')" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20">
                                 <i class="fa-solid fa-table"></i> Otwórz spis
@@ -176,13 +172,11 @@
             });
         }
 
-        // Otwieranie arkusza
         async function openSheet(fileUrl, title) {
             document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalDownloadBtn').href = fileUrl;
             document.getElementById('tableModal').classList.remove('hidden');
             
-            // Reset filtrów
             document.getElementById('tableSearch').value = '';
             document.getElementById('brandFilter').innerHTML = '<option value="">Wszystkie marki</option>';
             document.getElementById('tableContainer').innerHTML = `
@@ -195,23 +189,16 @@
                 const response = await fetch(fileUrl);
                 const arrayBuffer = await response.arrayBuffer();
                 
-                // Odczyt arkusza z LibreOffice
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
                 
-                // Konwersja na JSON
                 currentRawData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
                 if (currentRawData.length > 0) {
                     headers = Object.keys(currentRawData[0]);
-                    
-                    // Szukamy kolumny reprezentującej Markę (np. "Marka", "Brand", itp.)
                     brandColumnKey = headers.find(h => h.toLowerCase().includes('marka') || h.toLowerCase().includes('brand')) || headers[0];
-                    
-                    // Wypełnianie listy marek
                     populateBrandFilter();
-                    // Renderowanie tabeli
                     applyFilters();
                 } else {
                     document.getElementById('tableContainer').innerHTML = `<p class="text-center text-slate-400 py-10">Arkusz jest pusty.</p>`;
@@ -219,14 +206,10 @@
 
             } catch (error) {
                 console.error(error);
-                document.getElementById('tableContainer').innerHTML = `
-                    <div class="text-center py-10 text-red-400">
-                        Nie udało się odczytać pliku <b>${fileUrl}</b>. Upewnij się, że plik istnieje w folderze files/.
-                    </div>`;
+                document.getElementById('tableContainer').innerHTML = `<p class="text-center text-red-400 py-10">Błąd ładowania pliku.</p>`;
             }
         }
 
-        // Uzupełnia listę rozwijaną unikalnymi markami z arkusza
         function populateBrandFilter() {
             const brandSelect = document.getElementById('brandFilter');
             const brands = new Set();
@@ -237,58 +220,44 @@
             });
 
             const sortedBrands = Array.from(brands).sort();
-            
             brandSelect.innerHTML = '<option value="">Wszystkie marki</option>';
             sortedBrands.forEach(brand => {
                 brandSelect.innerHTML += `<option value="${brand}">${brand}</option>`;
             });
         }
 
-        // Filtrowanie, sortowanie i wyświetlanie tabeli
         function applyFilters() {
             const searchValue = document.getElementById('tableSearch').value.toLowerCase();
             const selectedBrand = document.getElementById('brandFilter').value;
             const sortOrder = document.getElementById('sortOrder').value;
 
-            // 1. Filtrowanie
             let filtered = currentRawData.filter(row => {
-                // Filtr marki
-                if (selectedBrand && row[brandColumnKey] !== selectedBrand) {
-                    return false;
-                }
-                
-                // Filtr wyszukiwarki (VIN, Nr Rej, cokolwiek)
+                if (selectedBrand && row[brandColumnKey] !== selectedBrand) return false;
                 if (searchValue) {
                     const rowString = Object.values(row).join(' ').toLowerCase();
                     return rowString.includes(searchValue);
                 }
-
                 return true;
             });
 
-            // 2. Sortowanie Alfabetyczne
             filtered.sort((a, b) => {
                 const valA = (a[brandColumnKey] || '').toString().toLowerCase();
                 const valB = (b[brandColumnKey] || '').toString().toLowerCase();
-                
-                if (sortOrder === 'asc') {
-                    return valA.localeCompare(valB, 'pl');
-                } else {
-                    return valB.localeCompare(valA, 'pl');
-                }
+                return sortOrder === 'asc' ? valA.localeCompare(valB, 'pl') : valB.localeCompare(valA, 'pl');
             });
 
-            // 3. Aktualizacja licznika
             document.getElementById('rowCount').innerText = filtered.length;
-
-            // 4. Generowanie HTML tabeli
             renderTableHtml(filtered);
         }
 
-        // Wyświetlanie tabeli w oknie
+        // Sprawdza czy kolumna dotyczy zdjęć
+        function isPhotoHeader(headerName) {
+            const h = headerName.toLowerCase();
+            return h.includes('zdjęć') || h.includes('zdjec') || h.includes('foto') || h.includes('photo') || h.includes('obraz');
+        }
+
         function renderTableHtml(data) {
             const container = document.getElementById('tableContainer');
-            
             if (data.length === 0) {
                 container.innerHTML = `<p class="text-center text-slate-400 py-10">Brak pojazdów spełniających kryteria.</p>`;
                 return;
@@ -304,7 +273,33 @@
                     <tbody>
                         ${data.map(row => `
                             <tr class="hover:bg-slate-800/50 transition-colors border-b border-slate-800/60">
-                                ${headers.map(h => `<td class="border border-slate-700/50 p-3 whitespace-nowrap">${row[h] !== undefined ? row[h] : ''}</td>`).join('')}
+                                ${headers.map(h => {
+                                    const cellValue = row[h] !== undefined ? row[h].toString().trim() : '';
+                                    
+                                    // Jeśli to kolumna ze zdjęciem
+                                    if (isPhotoHeader(h)) {
+                                        if (cellValue.startsWith('http://') || cellValue.startsWith('https://')) {
+                                            const urls = cellValue.split(/[\s,]+/).filter(u => u.startsWith('http'));
+                                            const urlsJson = JSON.stringify(urls).replace(/"/g, '&quot;');
+                                            return `
+                                                <td class="border border-slate-700/50 p-2.5 whitespace-nowrap">
+                                                    <button onclick="openImageModal(${urlsJson})" class="bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5">
+                                                        <i class="fa-solid fa-camera"></i> Zobacz (${urls.length})
+                                                    </button>
+                                                </td>`;
+                                        } else {
+                                            return `
+                                                <td class="border border-slate-700/50 p-2.5 whitespace-nowrap">
+                                                    <span class="text-slate-500 text-xs italic flex items-center gap-1.5">
+                                                        <i class="fa-solid fa-camera-slash"></i> Brak
+                                                    </span>
+                                                </td>`;
+                                        }
+                                    }
+
+                                    // Zwykła komórka
+                                    return `<td class="border border-slate-700/50 p-3 whitespace-nowrap">${cellValue}</td>`;
+                                }).join('')}
                             </tr>
                         `).join('')}
                     </tbody>
@@ -312,6 +307,45 @@
             `;
 
             container.innerHTML = tableHtml;
+        }
+
+        // OBSŁUGA PODGLĄDU ZDJĘĆ (LIGHTBOX)
+        function openImageModal(urls) {
+            currentImageUrls = urls;
+            currentImageIndex = 0;
+            updateModalImage();
+            document.getElementById('imageModal').classList.remove('hidden');
+        }
+
+        function updateModalImage() {
+            const imgEl = document.getElementById('previewImage');
+            const counterEl = document.getElementById('imageCounter');
+            const prevBtn = document.getElementById('prevImgBtn');
+            const nextBtn = document.getElementById('nextImgBtn');
+
+            imgEl.src = currentImageUrls[currentImageIndex];
+
+            if (currentImageUrls.length > 1) {
+                counterEl.innerText = `Zdjęcie ${currentImageIndex + 1} z ${currentImageUrls.length}`;
+                prevBtn.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+            } else {
+                counterEl.innerText = '';
+                prevBtn.classList.add('hidden');
+                nextBtn.classList.add('hidden');
+            }
+        }
+
+        function changeImage(direction) {
+            currentImageIndex += direction;
+            if (currentImageIndex < 0) currentImageIndex = currentImageUrls.length - 1;
+            if (currentImageIndex >= currentImageUrls.length) currentImageIndex = 0;
+            updateModalImage();
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.add('hidden');
+            document.getElementById('previewImage').src = '';
         }
 
         function closeModal() {
