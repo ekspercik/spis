@@ -101,25 +101,9 @@
         </div>
     </div>
 
-    <!-- OKNO MODALNE (PODGLĄD ZDJĘCIA) -->
-    <div id="imageModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex flex-col items-center justify-center p-4">
-        <button onclick="closeImageModal()" class="absolute top-5 right-5 text-white/70 hover:text-white text-3xl z-50 p-2">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-        
-        <div class="relative max-w-5xl max-h-[80vh] flex items-center justify-center">
-            <img id="previewImage" src="" alt="Podgląd auta" class="max-w-full max-h-[80vh] rounded-xl object-contain shadow-2xl border border-slate-700">
-            
-            <!-- Przyciski Nawigacji (Jeśli jest więcej zdjęć) -->
-            <button id="prevImgBtn" onclick="changeImage(-1)" class="absolute left-2 bg-black/50 hover:bg-black/80 text-white p-3 rounded-full hidden">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <button id="nextImgBtn" onclick="changeImage(1)" class="absolute right-2 bg-black/50 hover:bg-black/80 text-white p-3 rounded-full hidden">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
-        </div>
-
-        <div id="imageCounter" class="mt-4 text-slate-400 text-sm font-medium"></div>
+    <!-- PŁYWAJĄCY PODGLĄD ZDJĘCIA PRZY NAJECHANIU MYSZKĄ -->
+    <div id="hoverPreviewBox" class="fixed hidden z-[100] bg-slate-800/95 border border-slate-600 p-2 rounded-xl shadow-2xl pointer-events-none transition-opacity duration-150">
+        <img id="hoverPreviewImg" src="" class="max-w-[280px] max-h-[200px] rounded-lg object-contain" alt="Podgląd zdjęcia">
     </div>
 
     <!-- Stopka -->
@@ -132,10 +116,6 @@
         let currentRawData = [];
         let headers = [];
         let brandColumnKey = '';
-
-        // Zmienne do obsługi galerii zdjęć
-        let currentImageUrls = [];
-        let currentImageIndex = 0;
 
         async function loadData() {
             try {
@@ -250,10 +230,10 @@
             renderTableHtml(filtered);
         }
 
-        // Sprawdza czy kolumna dotyczy zdjęć
         function isPhotoHeader(headerName) {
-            const h = headerName.toLowerCase();
-            return h.includes('zdjęć') || h.includes('zdjec') || h.includes('foto') || h.includes('photo') || h.includes('obraz');
+            if (!headerName) return false;
+            const h = headerName.toLowerCase().trim();
+            return h.includes('zdj') || h.includes('foto') || h.includes('photo') || h.includes('obraz');
         }
 
         function renderTableHtml(data) {
@@ -275,30 +255,31 @@
                             <tr class="hover:bg-slate-800/50 transition-colors border-b border-slate-800/60">
                                 ${headers.map(h => {
                                     const cellValue = row[h] !== undefined ? row[h].toString().trim() : '';
-                                    
-                                    // Jeśli to kolumna ze zdjęciem
-                                    if (isPhotoHeader(h)) {
-                                        if (cellValue.startsWith('http://') || cellValue.startsWith('https://')) {
-                                            const urls = cellValue.split(/[\s,]+/).filter(u => u.startsWith('http'));
-                                            const urlsJson = JSON.stringify(urls).replace(/"/g, '&quot;');
+                                    const isUrl = cellValue.startsWith('http://') || cellValue.startsWith('https://');
+
+                                    // Kolumna ze zdjęciem LUB jakikolwiek bezpośredni link
+                                    if (isPhotoHeader(h) || isUrl) {
+                                        if (isUrl) {
                                             return `
-                                                <td class="border border-slate-700/50 p-2.5 whitespace-nowrap">
-                                                    <button onclick="openImageModal(${urlsJson})" class="bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5">
-                                                        <i class="fa-solid fa-camera"></i> Zobacz (${urls.length})
-                                                    </button>
+                                                <td class="border border-slate-700/50 p-3 text-center">
+                                                    <a href="${cellValue}" target="_blank" rel="noopener noreferrer" 
+                                                       onmouseenter="showHoverPreview(event, '${cellValue}')" 
+                                                       onmouseleave="hideHoverPreview()"
+                                                       class="inline-block text-lg hover:scale-125 transition-transform cursor-pointer" 
+                                                       title="Kliknij, aby otworzyć zdjęcie w nowej karcie">
+                                                       ✅
+                                                    </a>
                                                 </td>`;
                                         } else {
                                             return `
-                                                <td class="border border-slate-700/50 p-2.5 whitespace-nowrap">
-                                                    <span class="text-slate-500 text-xs italic flex items-center gap-1.5">
-                                                        <i class="fa-solid fa-camera-slash"></i> Brak
-                                                    </span>
+                                                <td class="border border-slate-700/50 p-3 text-center text-lg select-none">
+                                                    ❌
                                                 </td>`;
                                         }
                                     }
 
                                     // Zwykła komórka
-                                    return `<td class="border border-slate-700/50 p-3 whitespace-nowrap">${cellValue}</td>`;
+                                    return `<td class="border border-slate-700/50 p-3 whitespace-nowrap">${cellValue || '-'}</td>`;
                                 }).join('')}
                             </tr>
                         `).join('')}
@@ -309,47 +290,38 @@
             container.innerHTML = tableHtml;
         }
 
-        // OBSŁUGA PODGLĄDU ZDJĘĆ (LIGHTBOX)
-        function openImageModal(urls) {
-            currentImageUrls = urls;
-            currentImageIndex = 0;
-            updateModalImage();
-            document.getElementById('imageModal').classList.remove('hidden');
-        }
+        // PŁYWAJĄCY PODGLĄD ZDJĘCIA
+        function showHoverPreview(e, url) {
+            const previewBox = document.getElementById('hoverPreviewBox');
+            const previewImg = document.getElementById('hoverPreviewImg');
+            
+            previewImg.src = url;
 
-        function updateModalImage() {
-            const imgEl = document.getElementById('previewImage');
-            const counterEl = document.getElementById('imageCounter');
-            const prevBtn = document.getElementById('prevImgBtn');
-            const nextBtn = document.getElementById('nextImgBtn');
+            const rect = e.target.getBoundingClientRect();
+            
+            // Pozycjonowanie dymka (po prawej stronie lub po lewej jeśli brak miejsca)
+            let top = rect.top - 80;
+            let left = rect.right + 15;
 
-            imgEl.src = currentImageUrls[currentImageIndex];
-
-            if (currentImageUrls.length > 1) {
-                counterEl.innerText = `Zdjęcie ${currentImageIndex + 1} z ${currentImageUrls.length}`;
-                prevBtn.classList.remove('hidden');
-                nextBtn.classList.remove('hidden');
-            } else {
-                counterEl.innerText = '';
-                prevBtn.classList.add('hidden');
-                nextBtn.classList.add('hidden');
+            if (left + 300 > window.innerWidth) {
+                left = rect.left - 300;
             }
+            if (top < 10) top = 10;
+
+            previewBox.style.top = `${top}px`;
+            previewBox.style.left = `${left}px`;
+            previewBox.classList.remove('hidden');
         }
 
-        function changeImage(direction) {
-            currentImageIndex += direction;
-            if (currentImageIndex < 0) currentImageIndex = currentImageUrls.length - 1;
-            if (currentImageIndex >= currentImageUrls.length) currentImageIndex = 0;
-            updateModalImage();
-        }
-
-        function closeImageModal() {
-            document.getElementById('imageModal').classList.add('hidden');
-            document.getElementById('previewImage').src = '';
+        function hideHoverPreview() {
+            const previewBox = document.getElementById('hoverPreviewBox');
+            previewBox.classList.add('hidden');
+            document.getElementById('hoverPreviewImg').src = '';
         }
 
         function closeModal() {
             document.getElementById('tableModal').classList.add('hidden');
+            hideHoverPreview();
         }
 
         loadData();
