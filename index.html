@@ -82,10 +82,11 @@
                     <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                 </div>
 
+                <!-- Sortowanie po rejestracji -->
                 <div class="relative">
                     <select id="sortOrder" onchange="applyFilters()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 appearance-none cursor-pointer">
-                        <option value="asc">Sortuj: A - Z (Alfabetycznie)</option>
-                        <option value="desc">Sortuj: Z - A (Odwrotnie)</option>
+                        <option value="asc">Tablica: A do Z (rosnąco)</option>
+                        <option value="desc">Tablica: Z do A (malejąco)</option>
                     </select>
                     <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                 </div>
@@ -101,7 +102,7 @@
         </div>
     </div>
 
-    <!-- PŁYWAJĄCY PODGLĄD ZDJĘCIA PRZY NAJECHANIU MYSZKĄ -->
+    <!-- PŁYWAJĄCY PODGLĄD ZDJĘCIA -->
     <div id="hoverPreviewBox" class="fixed hidden z-[100] bg-slate-800/95 border border-slate-600 p-2 rounded-xl shadow-2xl pointer-events-none transition-opacity duration-150">
         <img id="hoverPreviewImg" src="" class="max-w-[280px] max-h-[200px] rounded-lg object-contain" alt="Podgląd zdjęcia">
     </div>
@@ -116,6 +117,7 @@
         let currentRawData = [];
         let headers = [];
         let brandColumnKey = '';
+        let plateColumnKey = ''; // Kolumna odpowiedzialna za tablicę rejestracyjną
 
         async function loadData() {
             try {
@@ -177,7 +179,16 @@
 
                 if (currentRawData.length > 0) {
                     headers = Object.keys(currentRawData[0]);
+                    
+                    // Szukanie kolumny z Marką
                     brandColumnKey = headers.find(h => h.toLowerCase().includes('marka') || h.toLowerCase().includes('brand')) || headers[0];
+                    
+                    // Szukanie kolumny z Tablicą Rejestracyjną
+                    plateColumnKey = headers.find(h => {
+                        const l = h.toLowerCase();
+                        return l.includes('tablica') || l.includes('rejestracj') || l.includes('nr rej') || l.includes('plate');
+                    }) || headers[0];
+
                     populateBrandFilter();
                     applyFilters();
                 } else {
@@ -211,6 +222,7 @@
             const selectedBrand = document.getElementById('brandFilter').value;
             const sortOrder = document.getElementById('sortOrder').value;
 
+            // 1. Filtrowanie
             let filtered = currentRawData.filter(row => {
                 if (selectedBrand && row[brandColumnKey] !== selectedBrand) return false;
                 if (searchValue) {
@@ -220,10 +232,14 @@
                 return true;
             });
 
+            // 2. Sortowanie PO TABLICY REJESTRACYJNEJ (z obsługą liczb i liter)
             filtered.sort((a, b) => {
-                const valA = (a[brandColumnKey] || '').toString().toLowerCase();
-                const valB = (b[brandColumnKey] || '').toString().toLowerCase();
-                return sortOrder === 'asc' ? valA.localeCompare(valB, 'pl') : valB.localeCompare(valA, 'pl');
+                const valA = (a[plateColumnKey] || '').toString().trim();
+                const valB = (b[plateColumnKey] || '').toString().trim();
+                
+                return sortOrder === 'asc' 
+                    ? valA.localeCompare(valB, 'pl', { numeric: true, sensitivity: 'base' })
+                    : valB.localeCompare(valA, 'pl', { numeric: true, sensitivity: 'base' });
             });
 
             document.getElementById('rowCount').innerText = filtered.length;
@@ -257,7 +273,6 @@
                                     const cellValue = row[h] !== undefined ? row[h].toString().trim() : '';
                                     const isUrl = cellValue.startsWith('http://') || cellValue.startsWith('https://');
 
-                                    // Kolumna ze zdjęciem LUB jakikolwiek bezpośredni link
                                     if (isPhotoHeader(h) || isUrl) {
                                         if (isUrl) {
                                             return `
@@ -278,7 +293,6 @@
                                         }
                                     }
 
-                                    // Zwykła komórka
                                     return `<td class="border border-slate-700/50 p-3 whitespace-nowrap">${cellValue || '-'}</td>`;
                                 }).join('')}
                             </tr>
@@ -290,7 +304,6 @@
             container.innerHTML = tableHtml;
         }
 
-        // PŁYWAJĄCY PODGLĄD ZDJĘCIA
         function showHoverPreview(e, url) {
             const previewBox = document.getElementById('hoverPreviewBox');
             const previewImg = document.getElementById('hoverPreviewImg');
@@ -298,8 +311,6 @@
             previewImg.src = url;
 
             const rect = e.target.getBoundingClientRect();
-            
-            // Pozycjonowanie dymka (po prawej stronie lub po lewej jeśli brak miejsca)
             let top = rect.top - 80;
             let left = rect.right + 15;
 
