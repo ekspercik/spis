@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moje Spisy Aut</title>
+    <title>Baza Pojazdów</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Custom Font: Outfit -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome (Ikony) -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Biblioteka do czytania plików LibreOffice (.ods) i Excel (.xlsx) -->
+    <!-- Biblioteka do czytania LibreOffice (.ods) / Excel (.xlsx) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
@@ -24,20 +24,35 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
+        /* Custom scrollbar dla tabeli */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between">
 
     <!-- Nagłówek -->
     <header class="border-b border-slate-800 bg-slate-900/50 sticky top-0 z-40 backdrop-blur-md">
-        <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="max-w-6xl mx-auto px-4 py-5 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="bg-blue-600 p-3 rounded-xl text-white shadow-lg shadow-blue-500/30">
                     <i class="fa-solid fa-car-side text-2xl"></i>
                 </div>
                 <div>
                     <h1 class="text-2xl font-bold tracking-tight">Baza Pojazdów</h1>
-                    <p class="text-xs text-slate-400">Przeglądaj arkusze LibreOffice / Excel</p>
+                    <p class="text-xs text-slate-400">Przeglądarka spisów i arkuszy</p>
                 </div>
             </div>
         </div>
@@ -46,44 +61,65 @@
     <!-- Główna zawartość -->
     <main class="max-w-6xl mx-auto px-4 py-10 flex-grow w-full">
         <h2 class="text-xl font-semibold text-slate-200 mb-6">Dostępne Spisy</h2>
-        
-        <!-- Grid ze spisami -->
         <div id="listsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
     </main>
 
-    <!-- OKNO MODALNE (Podgląd arkusza na żywo) -->
-    <div id="tableModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 w-full max-w-5xl h-[85vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden">
+    <!-- OKNO MODALNE (Interaktywna Tabela) -->
+    <div id="tableModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-6xl h-[90vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden">
             
             <!-- Nagłówek okna -->
             <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/50">
                 <div>
                     <h3 id="modalTitle" class="text-lg font-bold text-white">Ładowanie...</h3>
-                    <p class="text-xs text-slate-400">Podgląd na żywo z pliku arkusza</p>
+                    <p class="text-xs text-slate-400">Znaleziono pozycji: <span id="rowCount" class="text-blue-400 font-bold">0</span></p>
                 </div>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl p-2">
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl p-2 rounded-lg transition-colors">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
-            <!-- Wyszukiwarka wewnątrz tabeli -->
-            <div class="p-3 bg-slate-900 border-b border-slate-800">
-                <input type="text" id="tableSearch" onkeyup="filterTable()" placeholder="Szukaj w tym arkuszu (marka, cena, rocznik)..." 
-                    class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
+            <!-- Panel Filtrowania i Wyszukiwania -->
+            <div class="p-4 bg-slate-900/90 border-b border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                
+                <!-- Wyszukiwarka (VIN / Nr Rej / Szukaj) -->
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input type="text" id="tableSearch" oninput="applyFilters()" placeholder="Szukaj VIN, nr rej, model..." 
+                        class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
+                </div>
+
+                <!-- Filtr po Marce -->
+                <div class="relative">
+                    <select id="brandFilter" onchange="applyFilters()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 appearance-none cursor-pointer">
+                        <option value="">Wszystkie marki</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                </div>
+
+                <!-- Sortowanie Alfabetyczne -->
+                <div class="relative">
+                    <select id="sortOrder" onchange="applyFilters()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 appearance-none cursor-pointer">
+                        <option value="asc">Sortuj: A - Z (Alfabetycznie)</option>
+                        <option value="desc">Sortuj: Z - A (Odwrotnie)</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                </div>
+
             </div>
 
-            <!-- Tabela z danymi -->
+            <!-- Kontener na Tabelę -->
             <div class="flex-grow overflow-auto p-4" id="tableContainer">
-                <div class="text-center py-10 text-slate-400">
-                    <i class="fa-solid fa-spinner fa-spin text-3xl mb-3 text-blue-500"></i>
-                    <p>Wczytywanie i parsowanie arkusza...</p>
+                <div class="text-center py-12 text-slate-400">
+                    <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 text-blue-500"></i>
+                    <p>Wczytywanie danych z arkusza...</p>
                 </div>
             </div>
 
             <!-- Stopka okna z przyciskiem pobierania -->
             <div class="p-4 border-t border-slate-800 bg-slate-800/30 flex justify-end">
-                <a id="modalDownloadBtn" href="#" download class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
-                    <i class="fa-solid fa-download"></i> Pobierz oryginalny plik
+                <a id="modalDownloadBtn" href="#" download class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2 shadow-lg shadow-blue-600/20">
+                    <i class="fa-solid fa-download"></i> Pobierz plik LibreOffice
                 </a>
             </div>
         </div>
@@ -91,24 +127,29 @@
 
     <!-- Stopka -->
     <footer class="border-t border-slate-800 py-6 text-center text-slate-500 text-sm">
-        <p>&copy; 2024 Spis Aut</p>
+        <p>&copy; Baza Pojazdów</p>
     </footer>
 
-    <!-- Skrypt JS -->
+    <!-- Skrypt Logiki -->
     <script>
-        let allData = [];
+        let allLists = [];
+        let currentRawData = [];  // Surowe dane z otwartego arkusza
+        let headers = [];         // Nazwy kolumn
+        let brandColumnKey = '';  // Klucz kolumny zawierającej markę
 
+        // Pobieranie listy spisów
         async function loadData() {
             try {
                 const response = await fetch('data.json');
-                allData = await response.json();
-                renderCards(allData);
+                allLists = await response.json();
+                renderCards(allLists);
             } catch (error) {
                 console.error('Błąd:', error);
-                document.getElementById('listsContainer').innerHTML = `<p class="text-red-400">Błąd ładowania listy spisów.</p>`;
+                document.getElementById('listsContainer').innerHTML = `<p class="text-red-400">Nie udało się załadować spisu.</p>`;
             }
         }
 
+        // Renderowanie kart na stronie głównej
         function renderCards(data) {
             const container = document.getElementById('listsContainer');
             container.innerHTML = '';
@@ -117,15 +158,12 @@
                 const card = `
                     <div class="glass-card rounded-2xl p-6 flex flex-col justify-between hover:border-blue-500/50 transition-all">
                         <div>
-                            <span class="bg-blue-500/10 text-blue-400 text-xs font-semibold px-3 py-1 rounded-full border border-blue-500/20">
-                                Data: ${item.date}
-                            </span>
-                            <h3 class="text-xl font-bold mt-3 mb-2 text-white">${item.title}</h3>
+                            <h3 class="text-xl font-bold mb-2 text-white">${item.title}</h3>
                             <p class="text-slate-400 text-sm mb-6">${item.description}</p>
                         </div>
 
                         <div class="flex gap-3 pt-4 border-t border-slate-800">
-                            <button onclick="openSheet('${item.fileUrl}', '${item.title}')" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2">
+                            <button onclick="openSheet('${item.fileUrl}', '${item.title}')" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20">
                                 <i class="fa-solid fa-table"></i> Otwórz spis
                             </button>
                             <a href="${item.fileUrl}" download class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl text-sm transition-colors flex items-center justify-center">
@@ -138,70 +176,146 @@
             });
         }
 
-        // Otwieranie arkusza LibreOffice/Excel i zamiana na tabelę HTML
+        // Otwieranie arkusza
         async function openSheet(fileUrl, title) {
             document.getElementById('modalTitle').innerText = title;
             document.getElementById('modalDownloadBtn').href = fileUrl;
             document.getElementById('tableModal').classList.remove('hidden');
+            
+            // Reset filtrów
+            document.getElementById('tableSearch').value = '';
+            document.getElementById('brandFilter').innerHTML = '<option value="">Wszystkie marki</option>';
             document.getElementById('tableContainer').innerHTML = `
                 <div class="text-center py-12 text-slate-400">
                     <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 text-blue-500"></i>
-                    <p>Otwieranie pliku z LibreOffice...</p>
+                    <p>Otwieranie pliku...</p>
                 </div>`;
 
             try {
                 const response = await fetch(fileUrl);
                 const arrayBuffer = await response.arrayBuffer();
                 
-                // Odczyt pliku przez bibliotekę SheetJS
+                // Odczyt arkusza z LibreOffice
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
                 
-                // Konwersja do HTML
-                let htmlTable = XLSX.utils.sheet_to_html(worksheet, { id: 'excelTable' });
-                
-                document.getElementById('tableContainer').innerHTML = htmlTable;
-                
-                // Stylizowanie wygenerowanej tabeli
-                const table = document.getElementById('excelTable');
-                table.className = "w-full text-left border-collapse text-sm text-slate-300";
-                
-                // Stylizacja nagłówków i komórek
-                const cells = table.querySelectorAll('td, th');
-                cells.forEach(cell => {
-                    cell.className = "border border-slate-700/60 p-2.5";
-                });
-                
-                const firstRow = table.querySelector('tr');
-                if(firstRow) {
-                    firstRow.className = "bg-slate-800 text-white font-semibold sticky top-0";
+                // Konwersja na JSON
+                currentRawData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+                if (currentRawData.length > 0) {
+                    headers = Object.keys(currentRawData[0]);
+                    
+                    // Szukamy kolumny reprezentującej Markę (np. "Marka", "Brand", itp.)
+                    brandColumnKey = headers.find(h => h.toLowerCase().includes('marka') || h.toLowerCase().includes('brand')) || headers[0];
+                    
+                    // Wypełnianie listy marek
+                    populateBrandFilter();
+                    // Renderowanie tabeli
+                    applyFilters();
+                } else {
+                    document.getElementById('tableContainer').innerHTML = `<p class="text-center text-slate-400 py-10">Arkusz jest pusty.</p>`;
                 }
 
             } catch (error) {
                 console.error(error);
                 document.getElementById('tableContainer').innerHTML = `
                     <div class="text-center py-10 text-red-400">
-                        Nie udało się odczytać pliku. Upewnij się, że plik <b>${fileUrl}</b> istnieje w folderze files/.
+                        Nie udało się odczytać pliku <b>${fileUrl}</b>. Upewnij się, że plik istnieje w folderze files/.
                     </div>`;
             }
         }
 
-        function closeModal() {
-            document.getElementById('tableModal').classList.add('hidden');
-            document.getElementById('tableSearch').value = '';
+        // Uzupełnia listę rozwijaną unikalnymi markami z arkusza
+        function populateBrandFilter() {
+            const brandSelect = document.getElementById('brandFilter');
+            const brands = new Set();
+
+            currentRawData.forEach(row => {
+                const val = row[brandColumnKey];
+                if (val) brands.add(val.toString().trim());
+            });
+
+            const sortedBrands = Array.from(brands).sort();
+            
+            brandSelect.innerHTML = '<option value="">Wszystkie marki</option>';
+            sortedBrands.forEach(brand => {
+                brandSelect.innerHTML += `<option value="${brand}">${brand}</option>`;
+            });
         }
 
-        // Szukanie wewnątrz otwartej tabeli
-        function filterTable() {
-            const input = document.getElementById('tableSearch').value.toLowerCase();
-            const rows = document.querySelectorAll('#excelTable tr');
+        // Filtrowanie, sortowanie i wyświetlanie tabeli
+        function applyFilters() {
+            const searchValue = document.getElementById('tableSearch').value.toLowerCase();
+            const selectedBrand = document.getElementById('brandFilter').value;
+            const sortOrder = document.getElementById('sortOrder').value;
 
-            rows.forEach((row, index) => {
-                if (index === 0) return; // Pomijamy nagłówek
-                const text = row.innerText.toLowerCase();
-                row.style.display = text.includes(input) ? '' : 'none';
+            // 1. Filtrowanie
+            let filtered = currentRawData.filter(row => {
+                // Filtr marki
+                if (selectedBrand && row[brandColumnKey] !== selectedBrand) {
+                    return false;
+                }
+                
+                // Filtr wyszukiwarki (VIN, Nr Rej, cokolwiek)
+                if (searchValue) {
+                    const rowString = Object.values(row).join(' ').toLowerCase();
+                    return rowString.includes(searchValue);
+                }
+
+                return true;
             });
+
+            // 2. Sortowanie Alfabetyczne
+            filtered.sort((a, b) => {
+                const valA = (a[brandColumnKey] || '').toString().toLowerCase();
+                const valB = (b[brandColumnKey] || '').toString().toLowerCase();
+                
+                if (sortOrder === 'asc') {
+                    return valA.localeCompare(valB, 'pl');
+                } else {
+                    return valB.localeCompare(valA, 'pl');
+                }
+            });
+
+            // 3. Aktualizacja licznika
+            document.getElementById('rowCount').innerText = filtered.length;
+
+            // 4. Generowanie HTML tabeli
+            renderTableHtml(filtered);
+        }
+
+        // Wyświetlanie tabeli w oknie
+        function renderTableHtml(data) {
+            const container = document.getElementById('tableContainer');
+            
+            if (data.length === 0) {
+                container.innerHTML = `<p class="text-center text-slate-400 py-10">Brak pojazdów spełniających kryteria.</p>`;
+                return;
+            }
+
+            let tableHtml = `
+                <table class="w-full text-left border-collapse text-sm text-slate-300">
+                    <thead>
+                        <tr class="bg-slate-800 text-white font-semibold sticky top-0 shadow-md">
+                            ${headers.map(h => `<th class="border border-slate-700/80 p-3 whitespace-nowrap bg-slate-800">${h}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.map(row => `
+                            <tr class="hover:bg-slate-800/50 transition-colors border-b border-slate-800/60">
+                                ${headers.map(h => `<td class="border border-slate-700/50 p-3 whitespace-nowrap">${row[h] !== undefined ? row[h] : ''}</td>`).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = tableHtml;
+        }
+
+        function closeModal() {
+            document.getElementById('tableModal').classList.add('hidden');
         }
 
         loadData();
