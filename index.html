@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moje Spisy Aut</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom Font: Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome (Ikony) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Biblioteka do czytania plików LibreOffice (.ods) i Excel (.xlsx) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Nagłówek -->
+    <header class="border-b border-slate-800 bg-slate-900/50 sticky top-0 z-40 backdrop-blur-md">
+        <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 p-3 rounded-xl text-white shadow-lg shadow-blue-500/30">
+                    <i class="fa-solid fa-car-side text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight">Baza Pojazdów</h1>
+                    <p class="text-xs text-slate-400">Przeglądaj arkusze LibreOffice / Excel</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Główna zawartość -->
+    <main class="max-w-6xl mx-auto px-4 py-10 flex-grow w-full">
+        <h2 class="text-xl font-semibold text-slate-200 mb-6">Dostępne Spisy</h2>
+        
+        <!-- Grid ze spisami -->
+        <div id="listsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+    </main>
+
+    <!-- OKNO MODALNE (Podgląd arkusza na żywo) -->
+    <div id="tableModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-5xl h-[85vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden">
+            
+            <!-- Nagłówek okna -->
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/50">
+                <div>
+                    <h3 id="modalTitle" class="text-lg font-bold text-white">Ładowanie...</h3>
+                    <p class="text-xs text-slate-400">Podgląd na żywo z pliku arkusza</p>
+                </div>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl p-2">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Wyszukiwarka wewnątrz tabeli -->
+            <div class="p-3 bg-slate-900 border-b border-slate-800">
+                <input type="text" id="tableSearch" onkeyup="filterTable()" placeholder="Szukaj w tym arkuszu (marka, cena, rocznik)..." 
+                    class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
+            </div>
+
+            <!-- Tabela z danymi -->
+            <div class="flex-grow overflow-auto p-4" id="tableContainer">
+                <div class="text-center py-10 text-slate-400">
+                    <i class="fa-solid fa-spinner fa-spin text-3xl mb-3 text-blue-500"></i>
+                    <p>Wczytywanie i parsowanie arkusza...</p>
+                </div>
+            </div>
+
+            <!-- Stopka okna z przyciskiem pobierania -->
+            <div class="p-4 border-t border-slate-800 bg-slate-800/30 flex justify-end">
+                <a id="modalDownloadBtn" href="#" download class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-download"></i> Pobierz oryginalny plik
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stopka -->
+    <footer class="border-t border-slate-800 py-6 text-center text-slate-500 text-sm">
+        <p>&copy; 2024 Spis Aut</p>
+    </footer>
+
+    <!-- Skrypt JS -->
+    <script>
+        let allData = [];
+
+        async function loadData() {
+            try {
+                const response = await fetch('data.json');
+                allData = await response.json();
+                renderCards(allData);
+            } catch (error) {
+                console.error('Błąd:', error);
+                document.getElementById('listsContainer').innerHTML = `<p class="text-red-400">Błąd ładowania listy spisów.</p>`;
+            }
+        }
+
+        function renderCards(data) {
+            const container = document.getElementById('listsContainer');
+            container.innerHTML = '';
+
+            data.forEach((item) => {
+                const card = `
+                    <div class="glass-card rounded-2xl p-6 flex flex-col justify-between hover:border-blue-500/50 transition-all">
+                        <div>
+                            <span class="bg-blue-500/10 text-blue-400 text-xs font-semibold px-3 py-1 rounded-full border border-blue-500/20">
+                                Data: ${item.date}
+                            </span>
+                            <h3 class="text-xl font-bold mt-3 mb-2 text-white">${item.title}</h3>
+                            <p class="text-slate-400 text-sm mb-6">${item.description}</p>
+                        </div>
+
+                        <div class="flex gap-3 pt-4 border-t border-slate-800">
+                            <button onclick="openSheet('${item.fileUrl}', '${item.title}')" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-table"></i> Otwórz spis
+                            </button>
+                            <a href="${item.fileUrl}" download class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2.5 rounded-xl text-sm transition-colors flex items-center justify-center">
+                                <i class="fa-solid fa-download"></i>
+                            </a>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        }
+
+        // Otwieranie arkusza LibreOffice/Excel i zamiana na tabelę HTML
+        async function openSheet(fileUrl, title) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalDownloadBtn').href = fileUrl;
+            document.getElementById('tableModal').classList.remove('hidden');
+            document.getElementById('tableContainer').innerHTML = `
+                <div class="text-center py-12 text-slate-400">
+                    <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3 text-blue-500"></i>
+                    <p>Otwieranie pliku z LibreOffice...</p>
+                </div>`;
+
+            try {
+                const response = await fetch(fileUrl);
+                const arrayBuffer = await response.arrayBuffer();
+                
+                // Odczyt pliku przez bibliotekę SheetJS
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // Konwersja do HTML
+                let htmlTable = XLSX.utils.sheet_to_html(worksheet, { id: 'excelTable' });
+                
+                document.getElementById('tableContainer').innerHTML = htmlTable;
+                
+                // Stylizowanie wygenerowanej tabeli
+                const table = document.getElementById('excelTable');
+                table.className = "w-full text-left border-collapse text-sm text-slate-300";
+                
+                // Stylizacja nagłówków i komórek
+                const cells = table.querySelectorAll('td, th');
+                cells.forEach(cell => {
+                    cell.className = "border border-slate-700/60 p-2.5";
+                });
+                
+                const firstRow = table.querySelector('tr');
+                if(firstRow) {
+                    firstRow.className = "bg-slate-800 text-white font-semibold sticky top-0";
+                }
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('tableContainer').innerHTML = `
+                    <div class="text-center py-10 text-red-400">
+                        Nie udało się odczytać pliku. Upewnij się, że plik <b>${fileUrl}</b> istnieje w folderze files/.
+                    </div>`;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('tableModal').classList.add('hidden');
+            document.getElementById('tableSearch').value = '';
+        }
+
+        // Szukanie wewnątrz otwartej tabeli
+        function filterTable() {
+            const input = document.getElementById('tableSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#excelTable tr');
+
+            rows.forEach((row, index) => {
+                if (index === 0) return; // Pomijamy nagłówek
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(input) ? '' : 'none';
+            });
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
