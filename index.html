@@ -442,7 +442,6 @@
             gap: 7px;
         }
 
-        /* Czerwona belka kategorii z arkusza np. "Zasób 1 - Samochody" */
         .sheet-section-divider {
             background: linear-gradient(to right, rgba(190, 20, 20, 0.85), rgba(80, 15, 15, 0.7));
             border: 1px solid rgba(255, 120, 120, 0.45);
@@ -497,11 +496,11 @@
             font-weight: 600;
         }
 
-        /* === PRZYCISKI ZDJĘCIA I PODGLĄDU === */
+        /* === SEKCJA ZDJĘCIA I NIEWKLIKALNEGO ŹRÓDŁA === */
         .photo-actions {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             flex-shrink: 0;
         }
 
@@ -512,14 +511,28 @@
             border: 1px solid rgba(255,255,255,0.1);
             padding: 4px 10px;
             border-radius: 4px;
+            user-select: none;
         }
 
+        /* Niewklikalna etykieta źródła wpisanego w arkuszu (np. platesmania) */
+        .source-badge {
+            font-size: 11.5px;
+            color: #c8ffc2;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            padding: 4px 9px;
+            border-radius: 4px;
+            cursor: default;
+            user-select: none;
+        }
+
+        /* Przycisk "Zdjęcie" (po najechaniu podgląd, po kliknięciu nowa karta) */
         .photo-btn {
             background: linear-gradient(to bottom, #7ee872 0%, #34b324 50%, #1d8510 51%, #299e1b 100%);
             border: 1px solid #a5ff9c;
             color: #fff;
             font-weight: 600;
-            padding: 5px 10px;
+            padding: 5px 12px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 12px;
@@ -529,74 +542,65 @@
             gap: 5px;
             text-shadow: 0 1px 2px rgba(0,0,0,0.8);
             box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.6);
+            transition: filter 0.15s, box-shadow 0.15s;
         }
         .photo-btn:hover {
             filter: brightness(1.12);
-            box-shadow: 0 0 8px rgba(85, 255, 68, 0.6);
+            box-shadow: 0 0 10px rgba(85, 255, 68, 0.7);
         }
 
-        .photo-btn.secondary {
-            background: linear-gradient(to bottom, #6a756a 0%, #3a423a 50%, #222822 51%, #2c342c 100%);
-            border-color: rgba(255,255,255,0.35);
-        }
-
-        /* === OKIENKO PODGLĄDU ZDJĘCIA (MODAL AERO) === */
-        .aero-modal-overlay {
+        /* === PŁYWAJĄCE OKIENKO PODGLĄDU PO NAJECHANIU (HOVER PREVIEW) === */
+        .hover-preview-tooltip {
             position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(5px);
+            z-index: 99999;
+            width: 340px;
+            background: rgba(16, 22, 16, 0.96);
+            border: 1px solid rgba(140, 255, 130, 0.65);
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.9), 0 0 15px rgba(85, 255, 68, 0.3);
+            backdrop-filter: blur(8px);
+            pointer-events: none;
             display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            padding: 20px;
+            flex-direction: column;
+            gap: 6px;
         }
 
-        .aero-modal {
-            width: 680px;
-            max-width: 100%;
-            background: rgba(20, 28, 20, 0.95);
-            border: 1px solid rgba(150, 255, 150, 0.5);
-            border-radius: 12px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.9), 0 0 20px rgba(85, 255, 68, 0.25);
-            overflow: hidden;
-        }
-
-        .aero-modal-header {
-            background: linear-gradient(to bottom, #636863 0%, #2f332f 48%, #0f120f 50%, #1c211c 100%);
-            padding: 8px 15px;
+        .hover-preview-header {
+            font-size: 12px;
+            color: #85ff75;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+            padding-bottom: 4px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-            color: #fff;
-            font-size: 13.5px;
+            gap: 8px;
         }
 
-        .aero-modal-body {
-            padding: 16px;
-            text-align: center;
-        }
-
-        .preview-img-box {
-            background: #0c100c;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 6px;
-            padding: 10px;
-            margin-bottom: 14px;
-            min-height: 180px;
+        .hover-preview-body {
+            background: #0a0d0a;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 4px;
+            min-height: 150px;
+            max-height: 240px;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
+            padding: 4px;
         }
 
-        .preview-img-box img {
+        .hover-preview-body img {
             max-width: 100%;
-            max-height: 420px;
-            border-radius: 4px;
-            cursor: pointer;
+            max-height: 225px;
+            border-radius: 3px;
+            object-fit: contain;
+        }
+
+        .hover-preview-footer {
+            font-size: 11px;
+            color: #bbb;
+            text-align: center;
         }
 
         .spisy-cards-grid {
@@ -678,7 +682,7 @@
                     Witaj w <strong>The Frutiger Aero Plate Archive</strong>. Wszystkie spisy znajdujące się na tej stronie są wczytywane automatycznie z plików arkusza kalkulacyjnego LibreOffice (<code>.ods</code>).
                 </p>
                 <p style="margin-bottom: 14px;">
-                    Każdy spis zawiera szczegółowe informacje z arkusza: <strong>Numer rejestracyjny, VIN, Datę pierwszej rejestracji (D1R), Markę, Model, Silnik, Rok produkcji</strong> oraz bezpośredni <strong>podgląd i link do zdjęcia</strong>.
+                    Każdy spis zawiera szczegółowe informacje z arkusza: <strong>Numer rejestracyjny, VIN, Datę pierwszej rejestracji (D1R), Markę, Model, Silnik, Rok produkcji</strong> oraz wpisane źródło i podgląd zdjęcia po najechaniu kursorem.
                 </p>
 
                 <div style="border-top: 1px solid rgba(255,255,255,0.15); padding-top: 12px;">
@@ -723,27 +727,19 @@
     </div>
 </div>
 
-<!-- OKIENKO PODGLĄDU ZDJĘCIA -->
-<div class="aero-modal-overlay" id="photo-modal" onclick="closePhotoModal(event)">
-    <div class="aero-modal" onclick="event.stopPropagation()">
-        <div class="aero-modal-header">
-            <span id="modal-title">Podgląd zdjęcia</span>
-            <button class="aero-btn" style="width:auto; padding: 2px 8px; margin:0;" onclick="closePhotoModal()">✖ Zamknij</button>
-        </div>
-        <div class="aero-modal-body">
-            <div class="preview-img-box" id="modal-preview-content"></div>
-            <div style="display:flex; justify-content:center; gap:10px;">
-                <a id="modal-full-link" href="#" target="_blank" rel="noopener noreferrer" class="photo-btn">
-                    🔗 Kliknij tutaj, aby otworzyć pełny link w nowej karcie
-                </a>
-            </div>
-        </div>
+<!-- PŁYWAJĄCE OKIENKO PODGLĄDU ZDJĘCIA PO NAJECHANIU MYSZKĄ -->
+<div id="hover-preview-tooltip" class="hover-preview-tooltip">
+    <div class="hover-preview-header">
+        <span id="tooltip-car-title">Podgląd</span>
+        <span id="tooltip-source" style="color:#ccc; font-weight:normal;"></span>
     </div>
+    <div class="hover-preview-body" id="tooltip-img-box"></div>
+    <div class="hover-preview-footer">Kliknij przycisk „Zdjęcie”, aby otworzyć w nowej karcie</div>
 </div>
 
 <script>
     let configList = [];
-    let loadedSpisy = {}; // przechowuje wczytane wiersze dla każdego pliku .ods
+    let loadedSpisy = {};
     let activeSpisIndex = null;
 
     // === 1. START: WCZYTANIE CONFIG.JSON ===
@@ -758,7 +754,7 @@
             document.getElementById('intro-spisy-grid').innerHTML = `
                 <div style="grid-column: 1 / -1; padding: 15px; background: rgba(180,30,30,0.35); border: 1px solid #ff7777; border-radius: 5px; color: #fff;">
                     ⚠️ <strong>Nie udało się wczytać pliku <code>config.json</code>.</strong><br>
-                    Upewnij się, że plik <code>config.json</code> znajduje się w tym samym folderze co <code>index.html</code> oraz że otwierasz stronę przez serwer (np. Live Server lub hosting), a nie jako plik lokalny <code>file://</code>.
+                    Upewnij się, że plik <code>config.json</code> znajduje się w tym samym folderze co <code>index.html</code> oraz że otwierasz stronę przez serwer (np. Live Server lub hosting).
                 </div>
             `;
         }
@@ -777,14 +773,12 @@
         configList.forEach((spis, idx) => {
             const plateType = normalizeType(spis.typ);
 
-            // Przycisk w lewym menu
             sidebarList.innerHTML += `
                 <button class="aero-btn" id="nav-spis-${idx}" onclick="openSpis(${idx})">
                     <span>📋</span> ${spis.nazwa}
                 </button>
             `;
 
-            // Pinezka na drewnianej półce w banerze
             if (spis.pinezka) {
                 shelf.innerHTML += `
                     <div class="pinned-card" title="Otwórz spis: ${spis.nazwa}" onclick="openSpis(${idx})">
@@ -793,7 +787,6 @@
                 `;
             }
 
-            // Kafelek na stronie głównej
             introGrid.innerHTML += `
                 <div class="record-card" style="cursor:pointer; flex-direction:column; align-items:flex-start; gap:8px;" onclick="openSpis(${idx})">
                     <div style="font-weight:600; color:#85ff75; font-size:14px;">📂 ${spis.nazwa}</div>
@@ -809,7 +802,6 @@
         activeSpisIndex = index;
         const spisConfig = configList[index];
 
-        // Podświetlenie w menu
         document.querySelectorAll('.sidebar .aero-btn').forEach(b => b.classList.remove('active'));
         const activeBtn = document.getElementById(`nav-spis-${index}`);
         if (activeBtn) activeBtn.classList.add('active');
@@ -820,7 +812,6 @@
 
         const container = document.getElementById('records-container');
 
-        // Jeśli plik .ods nie był jeszcze wczytany, pobierz go i przetwórz
         if (!loadedSpisy[index]) {
             container.innerHTML = `<div style="padding: 25px; text-align:center;">⏳ Wczytywanie arkusza <code>${spisConfig.plik}</code>...</div>`;
             try {
@@ -834,7 +825,7 @@
                 container.innerHTML = `
                     <div style="padding: 20px; background: rgba(180,30,30,0.35); border: 1px solid #ff7777; border-radius: 5px; color: #fff;">
                         ❌ <strong>Błąd wczytywania pliku:</strong> <code>${spisConfig.plik}</code><br>
-                        Sprawdź, czy plik znajduje się we właściwym folderze i czy nazwa w <code>config.json</code> jest dokładna.
+                        Sprawdź, czy plik znajduje się w folderze <code>spisy/</code> i czy nazwa w <code>config.json</code> jest poprawna.
                     </div>
                 `;
                 return;
@@ -844,7 +835,7 @@
         renderCurrentSpis();
     }
 
-    // === 4. DOKŁADNE CZYTANIE KOMÓREK I HIPERŁĄCZY Z ARKUSZA .ODS ===
+    // === 4. CZYTANIE KOMÓREK, WPISANEGO PRZEZ CIEBIE ŹRÓDŁA I LINKU Z ARKUSZA .ODS ===
     function parseODSWorkbook(workbook) {
         const items = [];
         let orderCounter = 0;
@@ -855,7 +846,6 @@
 
             const range = XLSX.utils.decode_range(sheet['!ref']);
 
-            // Pomijamy wiersz 0 (nagłówki: Numer rejestracyjny, VIN, D1R, Marka, Model, Silnik, Rok produkcji, Zdjęcie)
             for (let R = range.s.r + 1; R <= range.e.r; R++) {
                 const getCell = (C) => sheet[XLSX.utils.encode_cell({ r: R, c: C })];
                 const getText = (C) => {
@@ -864,31 +854,54 @@
                     return String(cell.w !== undefined ? cell.w : (cell.v !== undefined ? cell.v : '')).trim();
                 };
 
-                const colPlate = getText(0); // Kolumna A: Numer rejestracyjny
-                const colVin   = getText(1); // Kolumna B: VIN
-                const colD1R   = getText(2); // Kolumna C: D1R
-                const colMake  = getText(3); // Kolumna D: Marka
-                const colModel = getText(4); // Kolumna E: Model
-                const colEng   = getText(5); // Kolumna F: Silnik
-                const colYear  = getText(6); // Kolumna G: Rok produkcji
+                const colPlate = getText(0); // A: Numer rejestracyjny
+                const colVin   = getText(1); // B: VIN
+                const colD1R   = getText(2); // C: D1R
+                const colMake  = getText(3); // D: Marka
+                const colModel = getText(4); // E: Model
+                const colEng   = getText(5); // F: Silnik
+                const colYear  = getText(6); // G: Rok produkcji
 
-                // Kolumna H (indeks 7): Zdjęcie (odczyt tekstu ORAZ zaszytego hiperłącza w LibreOffice!)
+                // H (indeks 7): Zdjęcie (Źródło wpisane przez właściciela + link)
                 const photoCell = getCell(7);
-                let photoLabel = getText(7);
+                const extraLinkCell = getCell(8); // Opcjonalnie kolumna I, gdyby link był obok
+                let cellText = getText(7);
+                let extraText = getText(8);
+
                 let photoUrl = '';
+                let sourceName = '';
 
                 if (photoCell) {
+                    // 1. Gdy w LibreOffice tekst (np. "platesmania") ma podpięty link przez Ctrl+K
                     if (photoCell.l && photoCell.l.Target) {
                         photoUrl = photoCell.l.Target;
-                    } else if (photoLabel.startsWith('http://') || photoLabel.startsWith('https://')) {
-                        photoUrl = photoLabel;
+                        sourceName = (cellText && !cellText.startsWith('http')) ? cellText : '';
+                    } 
+                    // 2. Gdy w jednej komórce wpisano źródło i link (np. "platesmania https://...")
+                    else if (cellText.includes('http://') || cellText.includes('https://')) {
+                        const urlMatch = cellText.match(/https?:\/\/[^\s|;]+/);
+                        if (urlMatch) {
+                            photoUrl = urlMatch[0];
+                            sourceName = cellText.replace(photoUrl, '').replace(/[|;-]/g, '').trim();
+                        }
+                    } 
+                    // 3. Gdy w kolumnie H wpisano samo źródło (np. "platesmania")
+                    else if (cellText) {
+                        sourceName = cellText;
                     }
                 }
 
-                // Pomiń całkowicie puste wiersze
+                // Jeśli link do zdjęcia podano osobno w kolumnie I obok
+                if (!photoUrl && extraLinkCell) {
+                    if (extraLinkCell.l && extraLinkCell.l.Target) {
+                        photoUrl = extraLinkCell.l.Target;
+                    } else if (extraText.startsWith('http://') || extraText.startsWith('https://')) {
+                        photoUrl = extraText;
+                    }
+                }
+
                 if (!colPlate && !colMake && !colModel && !colVin) continue;
 
-                // Wykryj czy wiersz jest belką sekcji (np. "Zasób 1 – Samochody")
                 const isSectionHeader = colPlate && !colVin && !colD1R && !colMake && !colModel && 
                     (colPlate.toLowerCase().startsWith('zasób') || colPlate.includes('–') || colPlate.includes('-'));
 
@@ -909,7 +922,7 @@
                         engine: colEng,
                         year: colYear,
                         photoUrl: photoUrl,
-                        photoLabel: photoLabel || (photoUrl ? 'Link' : ''),
+                        sourceName: sourceName,
                         sheetOrder: orderCounter++
                     });
                 }
@@ -919,7 +932,7 @@
         return items;
     }
 
-    // === 5. RENDEROWANIE, WYSZUKIWANIE I SORTOWANIE AKTYWNEGO SPISU ===
+    // === 5. RENDEROWANIE AKTYWNEGO SPISU ===
     function renderCurrentSpis() {
         if (activeSpisIndex === null || !loadedSpisy[activeSpisIndex]) return;
 
@@ -931,26 +944,22 @@
         const sortMode = document.getElementById('sort-select').value;
         const photoMode = document.getElementById('photo-filter').value;
 
-        // Gdy sortujemy lub filtrujemy, bierzemy same samochody (bez belek "Zasób 1")
         const isDefaultView = (sortMode === 'SHEET' && !query && photoMode === 'ALL');
 
         let filtered = allItems.filter(item => {
             if (item.isSection) return isDefaultView;
 
-            // Filtr zdjęcia
-            const hasPhoto = Boolean(item.photoUrl || item.photoLabel);
+            const hasPhoto = Boolean(item.photoUrl || item.sourceName);
             if (photoMode === 'WITH_PHOTO' && !hasPhoto) return false;
             if (photoMode === 'NO_PHOTO' && hasPhoto) return false;
 
-            // Wyszukiwarka
             if (query) {
-                const hay = `${item.plate} ${item.make} ${item.model} ${item.vin} ${item.d1r} ${item.engine} ${item.year}`.toLowerCase();
+                const hay = `${item.plate} ${item.make} ${item.model} ${item.vin} ${item.d1r} ${item.engine} ${item.year} ${item.sourceName}`.toLowerCase();
                 if (!hay.includes(query)) return false;
             }
             return true;
         });
 
-        // Sortowanie
         if (sortMode !== 'SHEET') {
             filtered.sort((a, b) => {
                 if (sortMode === 'PLATE_ASC') return a.plate.localeCompare(b.plate, 'pl', { numeric: true });
@@ -976,32 +985,41 @@
             return;
         }
 
-        container.innerHTML = filtered.map((item, idx) => {
+        container.innerHTML = filtered.map(item => {
             if (item.isSection) {
                 return `<div class="sheet-section-divider">${item.title}</div>`;
             }
 
             const carTitle = [item.make, item.model].filter(Boolean).join(' ') || 'Nieznany pojazd';
-            const hasPhoto = Boolean(item.photoUrl || item.photoLabel);
-            const finalUrl = item.photoUrl || (item.photoLabel.startsWith('http') ? item.photoLabel : '');
+            const hasPhoto = Boolean(item.photoUrl || item.sourceName);
 
             let photoSectionHTML = `<span class="no-photo-badge">🚫 Brak zdjęcia</span>`;
+
             if (hasPhoto) {
-                const safeTitle = (`${item.plate} - ${carTitle}`).replace(/'/g, "\\'");
-                const safeUrl = finalUrl.replace(/'/g, "\\'");
-                const safeLabel = (item.photoLabel || 'Link').replace(/'/g, "\\'");
+                const safeTitle = (`${item.plate} – ${carTitle}`).replace(/'/g, "\\'");
+                const safeUrl = (item.photoUrl || '').replace(/'/g, "\\'");
+                const safeSource = (item.sourceName || '').replace(/'/g, "\\'");
 
                 photoSectionHTML = `
                     <div class="photo-actions">
-                        <button class="photo-btn secondary" onclick="openPhotoPreview('${safeTitle}', '${safeUrl}', '${safeLabel}')">
-                            👁️ Podgląd
-                        </button>
-                        ${finalUrl ? `
-                            <a href="${finalUrl}" target="_blank" rel="noopener noreferrer" class="photo-btn" title="Otwórz pełny link">
-                                🔗 ${item.photoLabel || 'Zdjęcie'}
+                        <!-- Niewklikalne źródło wpisane własnoręcznie w arkuszu -->
+                        ${item.sourceName ? `<span class="source-badge">${item.sourceName}</span>` : ''}
+
+                        <!-- Przycisk "Zdjęcie": najechanie pokazuje podgląd, kliknięcie otwiera w nowej karcie -->
+                        ${item.photoUrl ? `
+                            <a href="${item.photoUrl}" target="_blank" rel="noopener noreferrer" class="photo-btn"
+                               onmouseenter="showHoverPreview(event, '${safeTitle}', '${safeUrl}', '${safeSource}')"
+                               onmousemove="moveHoverPreview(event)"
+                               onmouseleave="hideHoverPreview()">
+                                📷 Zdjęcie
                             </a>
                         ` : `
-                            <span class="no-photo-badge">📸 ${item.photoLabel}</span>
+                            <span class="photo-btn" style="opacity:0.6; cursor:default;"
+                                  onmouseenter="showHoverPreview(event, '${safeTitle}', '', '${safeSource}')"
+                                  onmousemove="moveHoverPreview(event)"
+                                  onmouseleave="hideHoverPreview()">
+                                📷 Zdjęcie
+                            </span>
                         `}
                     </div>
                 `;
@@ -1027,43 +1045,57 @@
         }).join('');
     }
 
-    // === 6. PODGLĄD ZDJĘCIA W OKIENKU MODALNYM ===
-    function openPhotoPreview(title, url, label) {
-        const modal = document.getElementById('photo-modal');
-        const modalTitle = document.getElementById('modal-title');
-        const previewContent = document.getElementById('modal-preview-content');
-        const fullLinkBtn = document.getElementById('modal-full-link');
+    // === 6. OBSŁUGA PODGLĄDU PO NAJECHANIU MYSZKĄ (HOVER TOOLTIP) ===
+    function showHoverPreview(e, title, url, source) {
+        const tooltip = document.getElementById('hover-preview-tooltip');
+        document.getElementById('tooltip-car-title').textContent = title;
+        document.getElementById('tooltip-source').textContent = source ? `Źródło: ${source}` : '';
 
-        modalTitle.textContent = `Podgląd zdjęcia: ${title}`;
+        const imgBox = document.getElementById('tooltip-img-box');
 
         if (url) {
-            fullLinkBtn.style.display = 'inline-flex';
-            fullLinkBtn.href = url;
-            fullLinkBtn.innerHTML = `🔗 Otwórz pełny link (${label}) w nowej karcie`;
-
-            previewContent.innerHTML = `
-                <a href="${url}" target="_blank" rel="noopener noreferrer" title="Kliknij, aby przejść do pełnego linku">
-                    <img src="${url}" alt="${title}" onerror="this.style.display='none'; document.getElementById('img-fallback-msg').style.display='block';">
-                </a>
-                <div id="img-fallback-msg" style="display:none; padding: 20px; color:#ccc;">
-                    🌐 Ten link prowadzi do strony zewnętrznej (<strong>${label}</strong>).<br>
-                    Kliknij przycisk poniżej, aby przejść bezpośrednio do zdjęcia!
+            imgBox.innerHTML = `
+                <img src="${url}" alt="${title}" 
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <div style="display:none; padding: 15px; text-align:center; color:#ccc; font-size:12px;">
+                    📸 Kliknij przycisk <strong>„Zdjęcie”</strong>, aby otworzyć pełne zdjęcie w nowej karcie!
                 </div>
             `;
         } else {
-            fullLinkBtn.style.display = 'none';
-            previewContent.innerHTML = `
-                <div style="padding: 20px; color:#ccc;">
-                    W arkuszu wpisano informację o zdjęciu: <strong>${label}</strong>, ale komórka nie zawiera jeszcze podpiętego adresu URL (<code>Ctrl+K</code> w LibreOffice).
+            imgBox.innerHTML = `
+                <div style="padding: 15px; text-align:center; color:#aaa; font-size:12px;">
+                    Wpisane źródło: <strong>${source || 'Brak'}</strong><br>
+                    (Brak podpiętego linku URL w komórce arkusza)
                 </div>
             `;
         }
 
-        modal.style.display = 'flex';
+        tooltip.style.display = 'flex';
+        moveHoverPreview(e);
     }
 
-    function closePhotoModal() {
-        document.getElementById('photo-modal').style.display = 'none';
+    function moveHoverPreview(e) {
+        const tooltip = document.getElementById('hover-preview-tooltip');
+        if (tooltip.style.display === 'none') return;
+
+        const tooltipWidth = 340;
+        const tooltipHeight = tooltip.offsetHeight || 240;
+
+        let left = e.clientX - tooltipWidth - 18;
+        let top = e.clientY - (tooltipHeight / 2);
+
+        if (left < 10) left = e.clientX + 18;
+        if (top < 10) top = 10;
+        if (top + tooltipHeight > window.innerHeight - 10) {
+            top = window.innerHeight - tooltipHeight - 10;
+        }
+
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+    }
+
+    function hideHoverPreview() {
+        document.getElementById('hover-preview-tooltip').style.display = 'none';
     }
 
     // === 7. POMOCNICZE FUNKCJE WIZUALIZACJI TABLIC ===
@@ -1105,6 +1137,7 @@
 
     function showIntro() {
         activeSpisIndex = null;
+        hideHoverPreview();
         document.querySelectorAll('.sidebar .aero-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('nav-intro').classList.add('active');
         document.getElementById('view-intro').style.display = 'block';
