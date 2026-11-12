@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Frutiger Aero Plate Archive - Spis Tablic</title>
+    <!-- Biblioteka SheetJS do bezpośredniego odczytu arkuszy LibreOffice (.ods) -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <style>
+        /* === RESET I BAZA FRUTIGER AERO === */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, 'Trebuchet MS', sans-serif;
+            background: url('https://images.unsplash.com/photo-1533460004989-cef01064af7e?q=80&w=2070&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            padding: 25px 10px;
+            min-height: 100vh;
+        }
+
+        /* === GŁÓWNE OKNO === */
+        .aero-window {
+            width: 1060px;
+            max-width: 100%;
+            background: rgba(18, 22, 18, 0.86);
+            border-radius: 28px 28px 8px 8px;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: 
+                0 20px 50px rgba(0, 0, 0, 0.85),
+                inset 0 0 15px rgba(76, 209, 55, 0.15);
+            backdrop-filter: blur(8px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* === GÓRNY NAGŁÓWEK (VISTA GLOSS) === */
+        .window-header {
+            height: 95px;
+            background: linear-gradient(to bottom, 
+                #7a7e7a 0%, 
+                #3c403c 15%, 
+                #1e211e 49%, 
+                #0a0c0a 50%, 
+                #141914 100%);
+            border-bottom: 2px solid #2b352b;
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6);
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+        }
+
+        .aero-logo {
+            width: 56px;
+            height: 56px;
+            margin-right: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            transform: rotate(-10deg) skewX(-5deg);
+            filter: drop-shadow(0 0 10px #39ff14);
+        }
+        .aero-logo div {
+            background: linear-gradient(135deg, #9cff88 0%, #29b814 50%, #0f6802 100%);
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.7);
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.8);
+        }
+
+        .header-titles h1 {
+            font-size: 28px;
+            font-weight: 400;
+            color: #ffffff;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.9), 0 0 10px rgba(255,255,255,0.3);
+        }
+        .header-titles p {
+            font-size: 14px;
+            color: #cccccc;
+            margin-top: 3px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+        }
+
+        /* === UKŁAD WEWNĘTRZNY === */
+        .window-body {
+            display: flex;
+            padding: 12px;
+            gap: 12px;
+            height: 780px;
+        }
+
+        /* === LEWY PANEL BOCZNY (SIDEBAR) === */
+        .sidebar {
+            width: 210px;
+            flex-shrink: 0;
+            background: rgba(15, 20, 15, 0.75);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 6px;
+            padding: 8px;
+            overflow-y: auto;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+
+        .nav-group {
+            margin-bottom: 14px;
+        }
+
+        .nav-group-header {
+            background: linear-gradient(to bottom, #575c57 0%, #2a2e2a 48%, #111311 50%, #1d211d 100%);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 4px;
+            text-align: center;
+            font-size: 12px;
+            color: #ffffff;
+            padding: 4px 0;
+            margin-bottom: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+            text-shadow: 0 1px 2px #000;
+        }
+
+        .aero-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            margin-bottom: 4px;
+            background: linear-gradient(to bottom, 
+                rgba(90, 98, 90, 0.75) 0%, 
+                rgba(48, 54, 48, 0.8) 49%, 
+                rgba(22, 26, 22, 0.9) 50%, 
+                rgba(35, 42, 35, 0.9) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 4px;
+            color: #e8e8e8;
+            font-size: 12px;
+            font-family: inherit;
+            text-align: left;
+            cursor: pointer;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 1px 2px rgba(0,0,0,0.6);
+            transition: all 0.15s ease;
+        }
+
+        .aero-btn:hover {
+            background: linear-gradient(to bottom, 
+                rgba(110, 145, 110, 0.85) 0%, 
+                rgba(60, 95, 60, 0.85) 49%, 
+                rgba(28, 55, 28, 0.95) 50%, 
+                rgba(45, 80, 45, 0.95) 100%);
+            border-color: rgba(140, 255, 140, 0.5);
+            color: #fff;
+            box-shadow: 0 0 8px rgba(80, 220, 80, 0.4), inset 0 1px 0 rgba(255,255,255,0.5);
+        }
+
+        .aero-btn.active {
+            background: linear-gradient(to bottom, 
+                #85e878 0%, 
+                #3dc22b 49%, 
+                #1f9c10 50%, 
+                #34b824 100%);
+            border-color: #a8ff9e;
+            color: #ffffff;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            box-shadow: 0 0 10px rgba(61, 194, 43, 0.6), inset 0 1px 1px rgba(255,255,255,0.8);
+        }
+
+        /* === GŁÓWNA ZAWARTOŚĆ === */
+        .main-content {
+            flex: 1;
+            background: rgba(16, 22, 16, 0.65);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+        }
+
+        .main-content::-webkit-scrollbar, .sidebar::-webkit-scrollbar {
+            width: 12px;
+        }
+        .main-content::-webkit-scrollbar-track, .sidebar::-webkit-scrollbar-track {
+            background: #121712;
+            border-left: 1px solid rgba(255,255,255,0.1);
+        }
+        .main-content::-webkit-scrollbar-thumb, .sidebar::-webkit-scrollbar-thumb {
+            background: linear-gradient(to right, #488e40, #275922);
+            border-radius: 6px;
+            border: 2px solid #121712;
+        }
+
+        .section-bar {
+            background: linear-gradient(to bottom, #636863 0%, #2f332f 48%, #0f120f 50%, #1c211c 100%);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            padding: 6px 15px;
+            text-align: center;
+            font-size: 14px;
+            color: #fff;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+            text-shadow: 0 1px 3px #000;
+            flex-shrink: 0;
+        }
+
+        /* === BANER Z PÓŁKĄ NA PINEZKI === */
+        .aero-banner {
+            height: 185px;
+            border: 2px solid rgba(255,255,255,0.35);
+            border-radius: 4px;
+            background: 
+                radial-gradient(circle at 80% 30%, rgba(150, 255, 100, 0.4), transparent 50%),
+                linear-gradient(135deg, rgba(20, 70, 20, 0.85), rgba(40, 140, 50, 0.75)),
+                url('https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1000&auto=format&fit=crop') center/cover;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6), inset 0 0 30px rgba(100, 255, 80, 0.3);
+            flex-shrink: 0;
+        }
+
+        .aero-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -20%;
+            width: 140%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.35), rgba(255,255,255,0.05));
+            transform: rotate(-4deg);
+            pointer-events: none;
+        }
+
+        .banner-title-area {
+            text-align: center;
+            margin-top: 18px;
+            z-index: 1;
+        }
+        .banner-title-area h2 {
+            font-size: 36px;
+            font-weight: 300;
+            color: #0b2408;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.7), 0 0 15px rgba(255,255,255,0.9);
+            letter-spacing: 1px;
+        }
+        .banner-title-area h2 span {
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+        }
+        .banner-title-area p {
+            color: #fff;
+            font-size: 13px;
+            text-shadow: 0 1px 4px #000, 0 0 8px #000;
+            margin-top: 2px;
+        }
+
+        .banner-shelf {
+            height: 62px;
+            background: linear-gradient(to bottom, #966f47, #6b4c2b 50%, #4d351c);
+            border-top: 2px solid #b88c61;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            padding: 0 15px;
+            z-index: 1;
+            overflow-x: auto;
+        }
+
+        .pinned-card {
+            background: #fff;
+            padding: 3px;
+            border-radius: 2px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.7);
+            transform: rotate(-3deg);
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+        .pinned-card:nth-child(even) {
+            transform: rotate(3deg);
+        }
+        .pinned-card:hover {
+            transform: scale(1.12) rotate(0deg);
+            z-index: 5;
+        }
+        .pinned-card::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #b30000);
+            border-radius: 50%;
+            position: absolute;
+            top: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+
+        /* === PUDEŁKO TREŚCI === */
+        .content-box {
+            background: rgba(18, 24, 18, 0.85);
+            border: 1px solid rgba(255,255,255,0.22);
+            border-radius: 4px;
+            padding: 16px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.7);
+            line-height: 1.55;
+            font-size: 13.5px;
+        }
+
+        /* === PASEK WYSZUKIWANIA I SORTOWANIA === */
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            background: linear-gradient(to bottom, rgba(50,60,50,0.7), rgba(20,25,20,0.9));
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .aero-input, .aero-select {
+            background: rgba(10, 14, 10, 0.9);
+            border: 1px solid rgba(150, 220, 150, 0.4);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12.5px;
+            font-family: inherit;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+        }
+        .aero-input:focus, .aero-select:focus {
+            outline: none;
+            border-color: #55ff44;
+            box-shadow: 0 0 8px rgba(85, 255, 68, 0.5), inset 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        /* === WIZUALIZACJA TABLICY REJESTRACYJNEJ === */
+        .plate-visual {
+            display: inline-flex;
+            align-items: stretch;
+            height: 36px;
+            background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 100%);
+            border: 2px solid #1a1a1a;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.8), inset 0 0 0 1px #999;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-weight: 900;
+            color: #111;
+            overflow: hidden;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .plate-visual.plate-black {
+            background: #141414;
+            color: #f0f0f0;
+            border-color: #cccccc;
+            padding: 0 6px;
+        }
+        .plate-visual.plate-yellow {
+            background: linear-gradient(to bottom, #ffdd33 0%, #e6c200 100%);
+        }
+        .plate-visual.plate-green {
+            background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 100%);
+            color: #0b7a20;
+        }
+
+        .euroband {
+            width: 22px;
+            background: #003399;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 0 2px 0;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            font-size: 8px;
+            font-weight: bold;
+            border-right: 1px solid #ccc;
+        }
+
+        .pl-flag-icon {
+            width: 14px;
+            height: 9px;
+            border: 1px solid rgba(0,0,0,0.4);
+            background: linear-gradient(to bottom, #ffffff 50%, #dc143c 50%);
+        }
+
+        .eu-stars-icon {
+            font-size: 9px;
+            color: #ffcc00;
+            line-height: 1;
+        }
+
+        .plate-number {
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 20px;
+            letter-spacing: 1.5px;
+        }
+
+        .plate-mini {
+            height: 24px;
+            border-width: 1px;
+        }
+        .plate-mini .euroband {
+            width: 14px;
+            font-size: 5px;
+            padding: 2px 0 1px 0;
+        }
+        .plate-mini .pl-flag-icon {
+            width: 9px;
+            height: 6px;
+        }
+        .plate-mini .plate-number {
+            font-size: 12px;
+            padding: 0 6px;
+        }
+
+        /* === WIERSZE AUT I NAGŁÓWKI ZASOBÓW === */
+        .records-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        /* Czerwona belka kategorii z arkusza np. "Zasób 1 - Samochody" */
+        .sheet-section-divider {
+            background: linear-gradient(to right, rgba(190, 20, 20, 0.85), rgba(80, 15, 15, 0.7));
+            border: 1px solid rgba(255, 120, 120, 0.45);
+            color: #fff;
+            font-weight: 600;
+            font-size: 13px;
+            padding: 5px 12px;
+            border-radius: 4px;
+            margin-top: 6px;
+            text-shadow: 0 1px 2px #000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .record-card {
+            background: linear-gradient(to right, rgba(35, 45, 35, 0.82), rgba(20, 26, 20, 0.92));
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 5px;
+            padding: 9px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+            transition: border-color 0.15s;
+        }
+        .record-card:hover {
+            border-color: rgba(100, 255, 85, 0.5);
+            background: linear-gradient(to right, rgba(45, 65, 45, 0.85), rgba(25, 35, 25, 0.95));
+        }
+
+        .record-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .car-details h4 {
+            font-size: 15px;
+            color: #fff;
+            margin-bottom: 3px;
+        }
+
+        .car-meta {
+            font-size: 12px;
+            color: #b0c0b0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .car-meta span strong {
+            color: #85ff75;
+            font-weight: 600;
+        }
+
+        /* === PRZYCISKI ZDJĘCIA I PODGLĄDU === */
+        .photo-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .no-photo-badge {
+            font-size: 11.5px;
+            color: #888;
+            background: rgba(0,0,0,0.35);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+
+        .photo-btn {
+            background: linear-gradient(to bottom, #7ee872 0%, #34b324 50%, #1d8510 51%, #299e1b 100%);
+            border: 1px solid #a5ff9c;
+            color: #fff;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.6);
+        }
+        .photo-btn:hover {
+            filter: brightness(1.12);
+            box-shadow: 0 0 8px rgba(85, 255, 68, 0.6);
+        }
+
+        .photo-btn.secondary {
+            background: linear-gradient(to bottom, #6a756a 0%, #3a423a 50%, #222822 51%, #2c342c 100%);
+            border-color: rgba(255,255,255,0.35);
+        }
+
+        /* === OKIENKO PODGLĄDU ZDJĘCIA (MODAL AERO) === */
+        .aero-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .aero-modal {
+            width: 680px;
+            max-width: 100%;
+            background: rgba(20, 28, 20, 0.95);
+            border: 1px solid rgba(150, 255, 150, 0.5);
+            border-radius: 12px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.9), 0 0 20px rgba(85, 255, 68, 0.25);
+            overflow: hidden;
+        }
+
+        .aero-modal-header {
+            background: linear-gradient(to bottom, #636863 0%, #2f332f 48%, #0f120f 50%, #1c211c 100%);
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            font-size: 13.5px;
+        }
+
+        .aero-modal-body {
+            padding: 16px;
+            text-align: center;
+        }
+
+        .preview-img-box {
+            background: #0c100c;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 14px;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-img-box img {
+            max-width: 100%;
+            max-height: 420px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .spisy-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        @media (max-width: 800px) {
+            .window-body {
+                flex-direction: column;
+                height: auto;
+            }
+            .sidebar {
+                width: 100%;
+            }
+            .record-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="aero-window">
+    <!-- NAGŁÓWEK OKNA -->
+    <header class="window-header">
+        <div class="aero-logo">
+            <div></div><div></div>
+            <div></div><div></div>
+        </div>
+        <div class="header-titles">
+            <h1>The Frutiger Aero Plate Archive</h1>
+            <p>Archiwum tablic rejestracyjnych i pojazdów wczytywane bezpośrednio z arkuszy .ODS</p>
+        </div>
+    </header>
+
+    <!-- CIAŁO OKNA -->
+    <div class="window-body">
+        
+        <!-- LEWE MENU BOCZNE -->
+        <aside class="sidebar">
+            <div class="nav-group">
+                <div class="nav-group-header">Nawigacja</div>
+                <button class="aero-btn active" id="nav-intro" onclick="showIntro()">
+                    <span>🏡</span> Strona Główna
+                </button>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-group-header">Dostępne Spisy (.ODS)</div>
+                <div id="sidebar-spisy-list">
+                    <!-- Przyciski spisów generują się automatycznie z config.json -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- GŁÓWNA ZAWARTOŚĆ -->
+        <main class="main-content">
+            
+            <div class="section-bar" id="page-title-bar">Strona Główna</div>
+
+            <!-- BANER Z PÓŁKĄ I PINEZKAMI -->
+            <div class="aero-banner">
+                <div class="banner-title-area">
+                    <h2>Polskie Tablice <span>Archive</span></h2>
+                    <p>Wybierz spis z menu po lewej lub kliknij przypiętą tablicę na półce poniżej!</p>
+                </div>
+
+                <!-- Drewniana półka (generowana z config.json) -->
+                <div class="banner-shelf" id="banner-shelf"></div>
+            </div>
+
+            <!-- WIDOK 1: STRONA GŁÓWNA -->
+            <div id="view-intro" class="content-box">
+                <p style="margin-bottom: 10px;">
+                    Witaj w <strong>The Frutiger Aero Plate Archive</strong>. Wszystkie spisy znajdujące się na tej stronie są wczytywane automatycznie z plików arkusza kalkulacyjnego LibreOffice (<code>.ods</code>).
+                </p>
+                <p style="margin-bottom: 14px;">
+                    Każdy spis zawiera szczegółowe informacje z arkusza: <strong>Numer rejestracyjny, VIN, Datę pierwszej rejestracji (D1R), Markę, Model, Silnik, Rok produkcji</strong> oraz bezpośredni <strong>podgląd i link do zdjęcia</strong>.
+                </p>
+
+                <div style="border-top: 1px solid rgba(255,255,255,0.15); padding-top: 12px;">
+                    <span style="color:#85ff75; font-weight:600;">📂 Wybierz spis do przeglądania:</span>
+                    <div class="spisy-cards-grid" id="intro-spisy-grid"></div>
+                </div>
+            </div>
+
+            <!-- WIDOK 2: WIDOK WYBRANEGO SPISU (.ODS) -->
+            <div id="view-list" class="content-box" style="display: none;">
+                
+                <!-- Pasek wyszukiwania i sortowania -->
+                <div class="filter-bar">
+                    <input type="text" id="search-input" class="aero-input" placeholder="🔍 Szukaj w tym spisie (tablica, marka, model, VIN, D1R)..." oninput="renderCurrentSpis()" style="flex: 1; min-width: 220px;">
+                    
+                    <select id="sort-select" class="aero-select" onchange="renderCurrentSpis()">
+                        <option value="SHEET">Kolejność: Domyślna (z arkusza)</option>
+                        <option value="PLATE_ASC">Sortuj: Tablica (A → Z)</option>
+                        <option value="PLATE_DESC">Sortuj: Tablica (Z → A)</option>
+                        <option value="CAR_ASC">Sortuj: Marka i model (A → Z)</option>
+                        <option value="CAR_DESC">Sortuj: Marka i model (Z → A)</option>
+                        <option value="D1R_ASC">Sortuj: Data 1. rej. D1R (Najstarsze)</option>
+                        <option value="D1R_DESC">Sortuj: Data 1. rej. D1R (Najnowsze)</option>
+                        <option value="YEAR_ASC">Sortuj: Rok produkcji (Najstarsze)</option>
+                        <option value="YEAR_DESC">Sortuj: Rok produkcji (Najnowsze)</option>
+                    </select>
+
+                    <select id="photo-filter" class="aero-select" onchange="renderCurrentSpis()">
+                        <option value="ALL">Zdjęcia: Wszystkie auta</option>
+                        <option value="WITH_PHOTO">📸 Tylko ze zdjęciem</option>
+                        <option value="NO_PHOTO">🚫 Tylko bez zdjęcia</option>
+                    </select>
+                </div>
+
+                <div id="spis-stats-bar" style="margin-bottom: 10px; font-size: 12.5px; color: #b5ffb0;"></div>
+
+                <!-- Kontener na wiersze z arkusza .ODS -->
+                <div id="records-container" class="records-grid"></div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- OKIENKO PODGLĄDU ZDJĘCIA -->
+<div class="aero-modal-overlay" id="photo-modal" onclick="closePhotoModal(event)">
+    <div class="aero-modal" onclick="event.stopPropagation()">
+        <div class="aero-modal-header">
+            <span id="modal-title">Podgląd zdjęcia</span>
+            <button class="aero-btn" style="width:auto; padding: 2px 8px; margin:0;" onclick="closePhotoModal()">✖ Zamknij</button>
+        </div>
+        <div class="aero-modal-body">
+            <div class="preview-img-box" id="modal-preview-content"></div>
+            <div style="display:flex; justify-content:center; gap:10px;">
+                <a id="modal-full-link" href="#" target="_blank" rel="noopener noreferrer" class="photo-btn">
+                    🔗 Kliknij tutaj, aby otworzyć pełny link w nowej karcie
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let configList = [];
+    let loadedSpisy = {}; // przechowuje wczytane wiersze dla każdego pliku .ods
+    let activeSpisIndex = null;
+
+    // === 1. START: WCZYTANIE CONFIG.JSON ===
+    async function initApp() {
+        try {
+            const res = await fetch('config.json', { cache: 'no-store' });
+            if (!res.ok) throw new Error('Brak pliku config.json');
+            configList = await res.json();
+
+            renderNavigationAndPins();
+        } catch (err) {
+            document.getElementById('intro-spisy-grid').innerHTML = `
+                <div style="grid-column: 1 / -1; padding: 15px; background: rgba(180,30,30,0.35); border: 1px solid #ff7777; border-radius: 5px; color: #fff;">
+                    ⚠️ <strong>Nie udało się wczytać pliku <code>config.json</code>.</strong><br>
+                    Upewnij się, że plik <code>config.json</code> znajduje się w tym samym folderze co <code>index.html</code> oraz że otwierasz stronę przez serwer (np. Live Server lub hosting), a nie jako plik lokalny <code>file://</code>.
+                </div>
+            `;
+        }
+    }
+
+    // === 2. GENEROWANIE MENU BOCZNEGO I PINEZEK Z CONFIG.JSON ===
+    function renderNavigationAndPins() {
+        const sidebarList = document.getElementById('sidebar-spisy-list');
+        const shelf = document.getElementById('banner-shelf');
+        const introGrid = document.getElementById('intro-spisy-grid');
+
+        sidebarList.innerHTML = '';
+        shelf.innerHTML = '';
+        introGrid.innerHTML = '';
+
+        configList.forEach((spis, idx) => {
+            const plateType = normalizeType(spis.typ);
+
+            // Przycisk w lewym menu
+            sidebarList.innerHTML += `
+                <button class="aero-btn" id="nav-spis-${idx}" onclick="openSpis(${idx})">
+                    <span>📋</span> ${spis.nazwa}
+                </button>
+            `;
+
+            // Pinezka na drewnianej półce w banerze
+            if (spis.pinezka) {
+                shelf.innerHTML += `
+                    <div class="pinned-card" title="Otwórz spis: ${spis.nazwa}" onclick="openSpis(${idx})">
+                        ${generatePlateHTML(spis.pinezka, plateType, true)}
+                    </div>
+                `;
+            }
+
+            // Kafelek na stronie głównej
+            introGrid.innerHTML += `
+                <div class="record-card" style="cursor:pointer; flex-direction:column; align-items:flex-start; gap:8px;" onclick="openSpis(${idx})">
+                    <div style="font-weight:600; color:#85ff75; font-size:14px;">📂 ${spis.nazwa}</div>
+                    ${spis.pinezka ? generatePlateHTML(spis.pinezka, plateType, true) : ''}
+                    <span style="font-size:11px; color:#aaa;">Plik: ${spis.plik}</span>
+                </div>
+            `;
+        });
+    }
+
+    // === 3. OTWIERANIE I PARSOWANIE PLIKU .ODS Z LIBREOFFICE ===
+    async function openSpis(index) {
+        activeSpisIndex = index;
+        const spisConfig = configList[index];
+
+        // Podświetlenie w menu
+        document.querySelectorAll('.sidebar .aero-btn').forEach(b => b.classList.remove('active'));
+        const activeBtn = document.getElementById(`nav-spis-${index}`);
+        if (activeBtn) activeBtn.classList.add('active');
+
+        document.getElementById('view-intro').style.display = 'none';
+        document.getElementById('view-list').style.display = 'block';
+        document.getElementById('page-title-bar').textContent = `Spis: ${spisConfig.nazwa}`;
+
+        const container = document.getElementById('records-container');
+
+        // Jeśli plik .ods nie był jeszcze wczytany, pobierz go i przetwórz
+        if (!loadedSpisy[index]) {
+            container.innerHTML = `<div style="padding: 25px; text-align:center;">⏳ Wczytywanie arkusza <code>${spisConfig.plik}</code>...</div>`;
+            try {
+                const res = await fetch(spisConfig.plik, { cache: 'no-store' });
+                if (!res.ok) throw new Error(`Nie znaleziono pliku ${spisConfig.plik}`);
+                const buffer = await res.arrayBuffer();
+                const workbook = XLSX.read(buffer, { type: 'array' });
+
+                loadedSpisy[index] = parseODSWorkbook(workbook);
+            } catch (err) {
+                container.innerHTML = `
+                    <div style="padding: 20px; background: rgba(180,30,30,0.35); border: 1px solid #ff7777; border-radius: 5px; color: #fff;">
+                        ❌ <strong>Błąd wczytywania pliku:</strong> <code>${spisConfig.plik}</code><br>
+                        Sprawdź, czy plik znajduje się we właściwym folderze i czy nazwa w <code>config.json</code> jest dokładna.
+                    </div>
+                `;
+                return;
+            }
+        }
+
+        renderCurrentSpis();
+    }
+
+    // === 4. DOKŁADNE CZYTANIE KOMÓREK I HIPERŁĄCZY Z ARKUSZA .ODS ===
+    function parseODSWorkbook(workbook) {
+        const items = [];
+        let orderCounter = 0;
+
+        workbook.SheetNames.forEach(sheetName => {
+            const sheet = workbook.Sheets[sheetName];
+            if (!sheet['!ref']) return;
+
+            const range = XLSX.utils.decode_range(sheet['!ref']);
+
+            // Pomijamy wiersz 0 (nagłówki: Numer rejestracyjny, VIN, D1R, Marka, Model, Silnik, Rok produkcji, Zdjęcie)
+            for (let R = range.s.r + 1; R <= range.e.r; R++) {
+                const getCell = (C) => sheet[XLSX.utils.encode_cell({ r: R, c: C })];
+                const getText = (C) => {
+                    const cell = getCell(C);
+                    if (!cell) return '';
+                    return String(cell.w !== undefined ? cell.w : (cell.v !== undefined ? cell.v : '')).trim();
+                };
+
+                const colPlate = getText(0); // Kolumna A: Numer rejestracyjny
+                const colVin   = getText(1); // Kolumna B: VIN
+                const colD1R   = getText(2); // Kolumna C: D1R
+                const colMake  = getText(3); // Kolumna D: Marka
+                const colModel = getText(4); // Kolumna E: Model
+                const colEng   = getText(5); // Kolumna F: Silnik
+                const colYear  = getText(6); // Kolumna G: Rok produkcji
+
+                // Kolumna H (indeks 7): Zdjęcie (odczyt tekstu ORAZ zaszytego hiperłącza w LibreOffice!)
+                const photoCell = getCell(7);
+                let photoLabel = getText(7);
+                let photoUrl = '';
+
+                if (photoCell) {
+                    if (photoCell.l && photoCell.l.Target) {
+                        photoUrl = photoCell.l.Target;
+                    } else if (photoLabel.startsWith('http://') || photoLabel.startsWith('https://')) {
+                        photoUrl = photoLabel;
+                    }
+                }
+
+                // Pomiń całkowicie puste wiersze
+                if (!colPlate && !colMake && !colModel && !colVin) continue;
+
+                // Wykryj czy wiersz jest belką sekcji (np. "Zasób 1 – Samochody")
+                const isSectionHeader = colPlate && !colVin && !colD1R && !colMake && !colModel && 
+                    (colPlate.toLowerCase().startsWith('zasób') || colPlate.includes('–') || colPlate.includes('-'));
+
+                if (isSectionHeader) {
+                    items.push({
+                        isSection: true,
+                        title: colPlate,
+                        sheetOrder: orderCounter++
+                    });
+                } else {
+                    items.push({
+                        isSection: false,
+                        plate: colPlate,
+                        vin: colVin,
+                        d1r: colD1R,
+                        make: colMake,
+                        model: colModel,
+                        engine: colEng,
+                        year: colYear,
+                        photoUrl: photoUrl,
+                        photoLabel: photoLabel || (photoUrl ? 'Link' : ''),
+                        sheetOrder: orderCounter++
+                    });
+                }
+            }
+        });
+
+        return items;
+    }
+
+    // === 5. RENDEROWANIE, WYSZUKIWANIE I SORTOWANIE AKTYWNEGO SPISU ===
+    function renderCurrentSpis() {
+        if (activeSpisIndex === null || !loadedSpisy[activeSpisIndex]) return;
+
+        const spisConfig = configList[activeSpisIndex];
+        const plateType = normalizeType(spisConfig.typ);
+        const allItems = loadedSpisy[activeSpisIndex];
+
+        const query = document.getElementById('search-input').value.trim().toLowerCase();
+        const sortMode = document.getElementById('sort-select').value;
+        const photoMode = document.getElementById('photo-filter').value;
+
+        // Gdy sortujemy lub filtrujemy, bierzemy same samochody (bez belek "Zasób 1")
+        const isDefaultView = (sortMode === 'SHEET' && !query && photoMode === 'ALL');
+
+        let filtered = allItems.filter(item => {
+            if (item.isSection) return isDefaultView;
+
+            // Filtr zdjęcia
+            const hasPhoto = Boolean(item.photoUrl || item.photoLabel);
+            if (photoMode === 'WITH_PHOTO' && !hasPhoto) return false;
+            if (photoMode === 'NO_PHOTO' && hasPhoto) return false;
+
+            // Wyszukiwarka
+            if (query) {
+                const hay = `${item.plate} ${item.make} ${item.model} ${item.vin} ${item.d1r} ${item.engine} ${item.year}`.toLowerCase();
+                if (!hay.includes(query)) return false;
+            }
+            return true;
+        });
+
+        // Sortowanie
+        if (sortMode !== 'SHEET') {
+            filtered.sort((a, b) => {
+                if (sortMode === 'PLATE_ASC') return a.plate.localeCompare(b.plate, 'pl', { numeric: true });
+                if (sortMode === 'PLATE_DESC') return b.plate.localeCompare(a.plate, 'pl', { numeric: true });
+                if (sortMode === 'CAR_ASC') return (`${a.make} ${a.model}`).localeCompare(`${b.make} ${b.model}`, 'pl');
+                if (sortMode === 'CAR_DESC') return (`${b.make} ${b.model}`).localeCompare(`${a.make} ${a.model}`, 'pl');
+                if (sortMode === 'D1R_ASC') return (a.d1r || '9999').localeCompare(b.d1r || '9999');
+                if (sortMode === 'D1R_DESC') return (b.d1r || '').localeCompare(a.d1r || '');
+                if (sortMode === 'YEAR_ASC') return (a.year || '9999').localeCompare(b.year || '9999', 'pl', { numeric: true });
+                if (sortMode === 'YEAR_DESC') return (b.year || '').localeCompare(a.year || '', 'pl', { numeric: true });
+                return 0;
+            });
+        }
+
+        const totalCars = allItems.filter(i => !i.isSection).length;
+        const shownCars = filtered.filter(i => !i.isSection).length;
+        document.getElementById('spis-stats-bar').innerHTML = 
+            `Samochodów w spisie: <strong>${shownCars}</strong> (z ${totalCars} w arkuszu <code>${spisConfig.plik}</code>)`;
+
+        const container = document.getElementById('records-container');
+        if (filtered.length === 0) {
+            container.innerHTML = `<div style="text-align:center; padding: 30px; color:#aaa;">Brak wyników spełniających kryteria.</div>`;
+            return;
+        }
+
+        container.innerHTML = filtered.map((item, idx) => {
+            if (item.isSection) {
+                return `<div class="sheet-section-divider">${item.title}</div>`;
+            }
+
+            const carTitle = [item.make, item.model].filter(Boolean).join(' ') || 'Nieznany pojazd';
+            const hasPhoto = Boolean(item.photoUrl || item.photoLabel);
+            const finalUrl = item.photoUrl || (item.photoLabel.startsWith('http') ? item.photoLabel : '');
+
+            let photoSectionHTML = `<span class="no-photo-badge">🚫 Brak zdjęcia</span>`;
+            if (hasPhoto) {
+                const safeTitle = (`${item.plate} - ${carTitle}`).replace(/'/g, "\\'");
+                const safeUrl = finalUrl.replace(/'/g, "\\'");
+                const safeLabel = (item.photoLabel || 'Link').replace(/'/g, "\\'");
+
+                photoSectionHTML = `
+                    <div class="photo-actions">
+                        <button class="photo-btn secondary" onclick="openPhotoPreview('${safeTitle}', '${safeUrl}', '${safeLabel}')">
+                            👁️ Podgląd
+                        </button>
+                        ${finalUrl ? `
+                            <a href="${finalUrl}" target="_blank" rel="noopener noreferrer" class="photo-btn" title="Otwórz pełny link">
+                                🔗 ${item.photoLabel || 'Zdjęcie'}
+                            </a>
+                        ` : `
+                            <span class="no-photo-badge">📸 ${item.photoLabel}</span>
+                        `}
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="record-card">
+                    <div class="record-left">
+                        ${generatePlateHTML(item.plate, plateType)}
+                        <div class="car-details">
+                            <h4>${carTitle}</h4>
+                            <div class="car-meta">
+                                <span><strong>VIN:</strong> ${item.vin || '—'}</span>
+                                <span><strong>D1R:</strong> ${item.d1r || '—'}</span>
+                                ${item.engine ? `<span><strong>Silnik:</strong> ${item.engine}</span>` : ''}
+                                ${item.year ? `<span><strong>Rok prod.:</strong> ${item.year}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    ${photoSectionHTML}
+                </div>
+            `;
+        }).join('');
+    }
+
+    // === 6. PODGLĄD ZDJĘCIA W OKIENKU MODALNYM ===
+    function openPhotoPreview(title, url, label) {
+        const modal = document.getElementById('photo-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const previewContent = document.getElementById('modal-preview-content');
+        const fullLinkBtn = document.getElementById('modal-full-link');
+
+        modalTitle.textContent = `Podgląd zdjęcia: ${title}`;
+
+        if (url) {
+            fullLinkBtn.style.display = 'inline-flex';
+            fullLinkBtn.href = url;
+            fullLinkBtn.innerHTML = `🔗 Otwórz pełny link (${label}) w nowej karcie`;
+
+            previewContent.innerHTML = `
+                <a href="${url}" target="_blank" rel="noopener noreferrer" title="Kliknij, aby przejść do pełnego linku">
+                    <img src="${url}" alt="${title}" onerror="this.style.display='none'; document.getElementById('img-fallback-msg').style.display='block';">
+                </a>
+                <div id="img-fallback-msg" style="display:none; padding: 20px; color:#ccc;">
+                    🌐 Ten link prowadzi do strony zewnętrznej (<strong>${label}</strong>).<br>
+                    Kliknij przycisk poniżej, aby przejść bezpośrednio do zdjęcia!
+                </div>
+            `;
+        } else {
+            fullLinkBtn.style.display = 'none';
+            previewContent.innerHTML = `
+                <div style="padding: 20px; color:#ccc;">
+                    W arkuszu wpisano informację o zdjęciu: <strong>${label}</strong>, ale komórka nie zawiera jeszcze podpiętego adresu URL (<code>Ctrl+K</code> w LibreOffice).
+                </div>
+            `;
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    function closePhotoModal() {
+        document.getElementById('photo-modal').style.display = 'none';
+    }
+
+    // === 7. POMOCNICZE FUNKCJE WIZUALIZACJI TABLIC ===
+    function normalizeType(rawType) {
+        const t = String(rawType || '').toLowerCase();
+        if (t.includes('flag') || t === 'pl') return 'FLAG_PL';
+        if (t.includes('czar') || t.includes('black')) return 'BLACK';
+        if (t.includes('zol') || t.includes('żół') || t.includes('zaby')) return 'YELLOW';
+        if (t.includes('ziel') || t.includes('elek')) return 'GREEN';
+        if (t.includes('ue') || t.includes('eu') || t.includes('gwiazd')) return 'EU_STARS';
+        return 'FLAG_PL';
+    }
+
+    function generatePlateHTML(plateNumber, type, isMini = false) {
+        let extraClass = isMini ? 'plate-mini' : '';
+        let eurobandHTML = '';
+
+        if (type === 'BLACK') {
+            extraClass += ' plate-black';
+        } else if (type === 'YELLOW') {
+            extraClass += ' plate-yellow';
+            eurobandHTML = `<div class="euroband"><div class="pl-flag-icon"></div><span>PL</span></div>`;
+        } else if (type === 'GREEN') {
+            extraClass += ' plate-green';
+            eurobandHTML = `<div class="euroband"><div class="eu-stars-icon">★</div><span>PL</span></div>`;
+        } else if (type === 'FLAG_PL') {
+            eurobandHTML = `<div class="euroband"><div class="pl-flag-icon"></div><span>PL</span></div>`;
+        } else {
+            eurobandHTML = `<div class="euroband"><div class="eu-stars-icon">★</div><span>PL</span></div>`;
+        }
+
+        return `
+            <div class="plate-visual ${extraClass}">
+                ${eurobandHTML}
+                <div class="plate-number">${plateNumber}</div>
+            </div>
+        `;
+    }
+
+    function showIntro() {
+        activeSpisIndex = null;
+        document.querySelectorAll('.sidebar .aero-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('nav-intro').classList.add('active');
+        document.getElementById('view-intro').style.display = 'block';
+        document.getElementById('view-list').style.display = 'none';
+        document.getElementById('page-title-bar').textContent = 'Strona Główna';
+    }
+
+    window.addEventListener('DOMContentLoaded', initApp);
+</script>
+
+</body>
+</html>
