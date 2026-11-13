@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spis tablic rejestracyjnych</title>
+    <!-- Twoje logo jako ikonka karty w przeglądarce -->
+    <link rel="icon" type="image/svg+xml" href="logo.svg">
     <!-- Biblioteka SheetJS do bezpośredniego odczytu arkuszy LibreOffice (.ods) -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
@@ -57,21 +59,14 @@
             padding: 0 30px;
         }
 
+        /* Twoje kwadratowe logo .SVG */
         .aero-logo {
-            width: 56px;
-            height: 56px;
+            width: 62px;
+            height: 62px;
             margin-right: 20px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4px;
-            transform: rotate(-10deg) skewX(-5deg);
-            filter: drop-shadow(0 0 10px #39ff14);
-        }
-        .aero-logo div {
-            background: linear-gradient(135deg, #9cff88 0%, #29b814 50%, #0f6802 100%);
-            border-radius: 4px;
-            border: 1px solid rgba(255,255,255,0.7);
-            box-shadow: inset 0 2px 4px rgba(255,255,255,0.8);
+            object-fit: contain;
+            flex-shrink: 0;
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 8px rgba(57, 255, 20, 0.35));
         }
 
         .header-titles h1 {
@@ -615,12 +610,9 @@
 <body>
 
 <div class="aero-window">
-    <!-- NAGŁÓWEK OKNA -->
+    <!-- NAGŁÓWEK OKNA Z TWOIM LOGO.SVG -->
     <header class="window-header">
-        <div class="aero-logo">
-            <div></div><div></div>
-            <div></div><div></div>
-        </div>
+        <img src="logo.svg" alt="Logo" class="aero-logo">
         <div class="header-titles">
             <h1>Spis tablic rejestracyjnych</h1>
             <p>Archiwum tablic rejestracyjnych i pojazdów wczytywane bezpośrednio z arkuszy .ODS</p>
@@ -849,7 +841,7 @@
 
                 // H (indeks 7): Zdjęcie (Źródło wpisane przez właściciela + link)
                 const photoCell = getCell(7);
-                const extraLinkCell = getCell(8); // Opcjonalnie kolumna I, gdyby link był obok
+                const extraLinkCell = getCell(8);
                 let cellText = getText(7);
                 let extraText = getText(8);
 
@@ -881,7 +873,6 @@
 
                 if (!colPlate && !colMake && !colModel && !colVin) continue;
 
-                // Pomijamy wiersze-nagłówki typu "Zasób 1 – Samochody", żeby nie psuły sortowania A -> Z
                 const isSectionHeader = colPlate && !colVin && !colD1R && !colMake && !colModel && 
                     (colPlate.toLowerCase().startsWith('zasób') || colPlate.includes('–') || colPlate.includes('-'));
 
