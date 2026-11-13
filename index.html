@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Frutiger Aero Plate Archive - Spis Tablic</title>
+    <title>Spis tablic rejestracyjnych</title>
     <!-- Biblioteka SheetJS do bezpośredniego odczytu arkuszy LibreOffice (.ods) -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
@@ -247,11 +247,11 @@
             z-index: 1;
         }
         .banner-title-area h2 {
-            font-size: 36px;
+            font-size: 34px;
             font-weight: 300;
             color: #0b2408;
             text-shadow: 0 1px 0 rgba(255,255,255,0.7), 0 0 15px rgba(255,255,255,0.9);
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
         .banner-title-area h2 span {
             font-weight: 700;
@@ -435,24 +435,11 @@
             padding: 0 6px;
         }
 
-        /* === WIERSZE AUT I NAGŁÓWKI ZASOBÓW === */
+        /* === WIERSZE AUT === */
         .records-grid {
             display: flex;
             flex-direction: column;
             gap: 7px;
-        }
-
-        .sheet-section-divider {
-            background: linear-gradient(to right, rgba(190, 20, 20, 0.85), rgba(80, 15, 15, 0.7));
-            border: 1px solid rgba(255, 120, 120, 0.45);
-            color: #fff;
-            font-weight: 600;
-            font-size: 13px;
-            padding: 5px 12px;
-            border-radius: 4px;
-            margin-top: 6px;
-            text-shadow: 0 1px 2px #000;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
 
         .record-card {
@@ -635,7 +622,7 @@
             <div></div><div></div>
         </div>
         <div class="header-titles">
-            <h1>The Frutiger Aero Plate Archive</h1>
+            <h1>Spis tablic rejestracyjnych</h1>
             <p>Archiwum tablic rejestracyjnych i pojazdów wczytywane bezpośrednio z arkuszy .ODS</p>
         </div>
     </header>
@@ -668,7 +655,7 @@
             <!-- BANER Z PÓŁKĄ I PINEZKAMI -->
             <div class="aero-banner">
                 <div class="banner-title-area">
-                    <h2>Polskie Tablice <span>Archive</span></h2>
+                    <h2>Spis tablic <span>rejestracyjnych</span></h2>
                     <p>Wybierz spis z menu po lewej lub kliknij przypiętą tablicę na półce poniżej!</p>
                 </div>
 
@@ -679,7 +666,7 @@
             <!-- WIDOK 1: STRONA GŁÓWNA -->
             <div id="view-intro" class="content-box">
                 <p style="margin-bottom: 10px;">
-                    Witaj w <strong>The Frutiger Aero Plate Archive</strong>. Wszystkie spisy znajdujące się na tej stronie są wczytywane automatycznie z plików arkusza kalkulacyjnego LibreOffice (<code>.ods</code>).
+                    Witaj na stronie <strong>Spis tablic rejestracyjnych</strong>. Wszystkie spisy znajdujące się na tej stronie są wczytywane automatycznie z plików arkusza kalkulacyjnego LibreOffice (<code>.ods</code>).
                 </p>
                 <p style="margin-bottom: 14px;">
                     Każdy spis zawiera szczegółowe informacje z arkusza: <strong>Numer rejestracyjny, VIN, Datę pierwszej rejestracji (D1R), Markę, Model, Silnik, Rok produkcji</strong> oraz wpisane źródło i podgląd zdjęcia po najechaniu kursorem.
@@ -694,13 +681,12 @@
             <!-- WIDOK 2: WIDOK WYBRANEGO SPISU (.ODS) -->
             <div id="view-list" class="content-box" style="display: none;">
                 
-                <!-- Pasek wyszukiwania i sortowania -->
+                <!-- Pasek wyszukiwania i sortowania (domyślnie Tablica A -> Z) -->
                 <div class="filter-bar">
                     <input type="text" id="search-input" class="aero-input" placeholder="🔍 Szukaj w tym spisie (tablica, marka, model, VIN, D1R)..." oninput="renderCurrentSpis()" style="flex: 1; min-width: 220px;">
                     
                     <select id="sort-select" class="aero-select" onchange="renderCurrentSpis()">
-                        <option value="SHEET">Kolejność: Domyślna (z arkusza)</option>
-                        <option value="PLATE_ASC">Sortuj: Tablica (A → Z)</option>
+                        <option value="PLATE_ASC" selected>Sortuj: Tablica (A → Z)</option>
                         <option value="PLATE_DESC">Sortuj: Tablica (Z → A)</option>
                         <option value="CAR_ASC">Sortuj: Marka i model (A → Z)</option>
                         <option value="CAR_DESC">Sortuj: Marka i model (Z → A)</option>
@@ -838,7 +824,6 @@
     // === 4. CZYTANIE KOMÓREK, WPISANEGO PRZEZ CIEBIE ŹRÓDŁA I LINKU Z ARKUSZA .ODS ===
     function parseODSWorkbook(workbook) {
         const items = [];
-        let orderCounter = 0;
 
         workbook.SheetNames.forEach(sheetName => {
             const sheet = workbook.Sheets[sheetName];
@@ -872,26 +857,20 @@
                 let sourceName = '';
 
                 if (photoCell) {
-                    // 1. Gdy w LibreOffice tekst (np. "platesmania") ma podpięty link przez Ctrl+K
                     if (photoCell.l && photoCell.l.Target) {
                         photoUrl = photoCell.l.Target;
                         sourceName = (cellText && !cellText.startsWith('http')) ? cellText : '';
-                    } 
-                    // 2. Gdy w jednej komórce wpisano źródło i link (np. "platesmania https://...")
-                    else if (cellText.includes('http://') || cellText.includes('https://')) {
+                    } else if (cellText.includes('http://') || cellText.includes('https://')) {
                         const urlMatch = cellText.match(/https?:\/\/[^\s|;]+/);
                         if (urlMatch) {
                             photoUrl = urlMatch[0];
                             sourceName = cellText.replace(photoUrl, '').replace(/[|;-]/g, '').trim();
                         }
-                    } 
-                    // 3. Gdy w kolumnie H wpisano samo źródło (np. "platesmania")
-                    else if (cellText) {
+                    } else if (cellText) {
                         sourceName = cellText;
                     }
                 }
 
-                // Jeśli link do zdjęcia podano osobno w kolumnie I obok
                 if (!photoUrl && extraLinkCell) {
                     if (extraLinkCell.l && extraLinkCell.l.Target) {
                         photoUrl = extraLinkCell.l.Target;
@@ -902,18 +881,12 @@
 
                 if (!colPlate && !colMake && !colModel && !colVin) continue;
 
+                // Pomijamy wiersze-nagłówki typu "Zasób 1 – Samochody", żeby nie psuły sortowania A -> Z
                 const isSectionHeader = colPlate && !colVin && !colD1R && !colMake && !colModel && 
                     (colPlate.toLowerCase().startsWith('zasób') || colPlate.includes('–') || colPlate.includes('-'));
 
-                if (isSectionHeader) {
+                if (!isSectionHeader) {
                     items.push({
-                        isSection: true,
-                        title: colPlate,
-                        sheetOrder: orderCounter++
-                    });
-                } else {
-                    items.push({
-                        isSection: false,
                         plate: colPlate,
                         vin: colVin,
                         d1r: colD1R,
@@ -922,8 +895,7 @@
                         engine: colEng,
                         year: colYear,
                         photoUrl: photoUrl,
-                        sourceName: sourceName,
-                        sheetOrder: orderCounter++
+                        sourceName: sourceName
                     });
                 }
             }
@@ -932,7 +904,7 @@
         return items;
     }
 
-    // === 5. RENDEROWANIE AKTYWNEGO SPISU ===
+    // === 5. RENDEROWANIE AKTYWNEGO SPISU (DOMYŚLNIE TABLICA A -> Z) ===
     function renderCurrentSpis() {
         if (activeSpisIndex === null || !loadedSpisy[activeSpisIndex]) return;
 
@@ -944,11 +916,7 @@
         const sortMode = document.getElementById('sort-select').value;
         const photoMode = document.getElementById('photo-filter').value;
 
-        const isDefaultView = (sortMode === 'SHEET' && !query && photoMode === 'ALL');
-
         let filtered = allItems.filter(item => {
-            if (item.isSection) return isDefaultView;
-
             const hasPhoto = Boolean(item.photoUrl || item.sourceName);
             if (photoMode === 'WITH_PHOTO' && !hasPhoto) return false;
             if (photoMode === 'NO_PHOTO' && hasPhoto) return false;
@@ -960,22 +928,21 @@
             return true;
         });
 
-        if (sortMode !== 'SHEET') {
-            filtered.sort((a, b) => {
-                if (sortMode === 'PLATE_ASC') return a.plate.localeCompare(b.plate, 'pl', { numeric: true });
-                if (sortMode === 'PLATE_DESC') return b.plate.localeCompare(a.plate, 'pl', { numeric: true });
-                if (sortMode === 'CAR_ASC') return (`${a.make} ${a.model}`).localeCompare(`${b.make} ${b.model}`, 'pl');
-                if (sortMode === 'CAR_DESC') return (`${b.make} ${b.model}`).localeCompare(`${a.make} ${a.model}`, 'pl');
-                if (sortMode === 'D1R_ASC') return (a.d1r || '9999').localeCompare(b.d1r || '9999');
-                if (sortMode === 'D1R_DESC') return (b.d1r || '').localeCompare(a.d1r || '');
-                if (sortMode === 'YEAR_ASC') return (a.year || '9999').localeCompare(b.year || '9999', 'pl', { numeric: true });
-                if (sortMode === 'YEAR_DESC') return (b.year || '').localeCompare(a.year || '', 'pl', { numeric: true });
-                return 0;
-            });
-        }
+        // Sortowanie (domyślnie PLATE_ASC: Tablica A -> Z)
+        filtered.sort((a, b) => {
+            if (sortMode === 'PLATE_ASC') return a.plate.localeCompare(b.plate, 'pl', { numeric: true });
+            if (sortMode === 'PLATE_DESC') return b.plate.localeCompare(a.plate, 'pl', { numeric: true });
+            if (sortMode === 'CAR_ASC') return (`${a.make} ${a.model}`).localeCompare(`${b.make} ${b.model}`, 'pl');
+            if (sortMode === 'CAR_DESC') return (`${b.make} ${b.model}`).localeCompare(`${a.make} ${a.model}`, 'pl');
+            if (sortMode === 'D1R_ASC') return (a.d1r || '9999').localeCompare(b.d1r || '9999');
+            if (sortMode === 'D1R_DESC') return (b.d1r || '').localeCompare(a.d1r || '');
+            if (sortMode === 'YEAR_ASC') return (a.year || '9999').localeCompare(b.year || '9999', 'pl', { numeric: true });
+            if (sortMode === 'YEAR_DESC') return (b.year || '').localeCompare(a.year || '', 'pl', { numeric: true });
+            return 0;
+        });
 
-        const totalCars = allItems.filter(i => !i.isSection).length;
-        const shownCars = filtered.filter(i => !i.isSection).length;
+        const totalCars = allItems.length;
+        const shownCars = filtered.length;
         document.getElementById('spis-stats-bar').innerHTML = 
             `Samochodów w spisie: <strong>${shownCars}</strong> (z ${totalCars} w arkuszu <code>${spisConfig.plik}</code>)`;
 
@@ -986,10 +953,6 @@
         }
 
         container.innerHTML = filtered.map(item => {
-            if (item.isSection) {
-                return `<div class="sheet-section-divider">${item.title}</div>`;
-            }
-
             const carTitle = [item.make, item.model].filter(Boolean).join(' ') || 'Nieznany pojazd';
             const hasPhoto = Boolean(item.photoUrl || item.sourceName);
 
